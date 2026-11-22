@@ -7,8 +7,11 @@ requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.20.1",
     "asyncpg>=0.32.0",
+    "email-validator>=2.4.0",
     "fastapi>=0.165.0",
+    "pwdlib[argon2]>=0.4.2",
     "pydantic-settings>=2.16.3",
+    "pyjwt>=2.15.1",
     "sqlalchemy[asyncio]>=2.0",
     "uvicorn[standard]>=0.54.0",
 ]
@@ -31,6 +34,10 @@ extend-exclude = ["alembic/versions"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "ASYNC", "SIM"]
+
+[tool.ruff.lint.isort]
+# The local `alembic/` migrations dir would otherwise make ruff treat the library as first-party.
+known-third-party = ["alembic"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

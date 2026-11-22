@@ -12,6 +12,11 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://promoledger:promoledger@localhost:5432/promoledger"
     DATABASE_ECHO: bool = False
 
+    # Local-only default; MUST be overridden via environment outside local/test.
+    JWT_SECRET_KEY: str = "local-dev-insecure-secret-key-change-me-0123456789abcdef"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
 
 @lru_cache
 def get_settings() -> Settings:

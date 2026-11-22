@@ -2,6 +2,10 @@
 
 This document defines the physical and logical database schema, data dictionary, relational constraints, and domain invariants for the **PromoLedger** platform (PostgreSQL engine).
 
+> **Physical naming convention:** tables are singular `snake_case` versions of the entity names below, except where the entity name is a PostgreSQL reserved word: `USER` → `app_user`, `ORDER` → `customer_order`.
+>
+> **Timestamps:** `created_at` / `updated_at` have `DEFAULT NOW()` in DDL; `updated_at` is refreshed on every ORM `UPDATE` (`onupdate=now()`), and server-generated values are fetched back via `RETURNING` (`eager_defaults`).
+
 ---
 
 ## 1. Entity Relationship Diagram (ERD)
@@ -166,6 +170,8 @@ Associative table supporting campaigns co-organized by multiple partner institut
 
 ### 2.4 `USER`
 
+> **Physical table name:** `app_user` (`user` is a reserved word in PostgreSQL). ORM class: `User`.
+
 Authenticated user accounts. Note that global system roles do **not** live here; roles are scoped per promotion.
 
 | Column          | Type           | Constraints                                     | Description                           |
@@ -227,6 +233,8 @@ Buyer registered within a campaign context.
 ---
 
 ### 2.8 `ORDER`
+
+> **Physical table name:** `customer_order` (`order` is a reserved word in PostgreSQL). ORM class: `Order`. Foreign keys and child tables keep their logical names (`order_id`, `order_item`, `order_audit_event`).
 
 Core transactional ledger entity tracking a customer purchase mediated by a field seller.
 

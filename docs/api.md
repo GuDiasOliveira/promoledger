@@ -87,6 +87,19 @@ Standard Status Codes:
 | `POST` | `/api/v1/auth/token`    | Public        | Authenticate user via email/credentials; returns JWT access token.                       |
 | `GET`  | `/api/v1/auth/me`       | Authenticated | Retrieve current user profile and list of active `PromotionMember` campaigns.            |
 
+### Auth Error Codes
+
+| Status | `code`                     | When                                                                                 |
+| :----- | :------------------------- | :----------------------------------------------------------------------------------- |
+| `401`  | `NOT_AUTHENTICATED`        | Missing or non-Bearer `Authorization` header.                                        |
+| `401`  | `TOKEN_EXPIRED`            | JWT `exp` is in the past.                                                            |
+| `401`  | `INVALID_TOKEN`            | Bad signature, malformed token/claims, or `sub` user no longer exists.               |
+| `401`  | `INVALID_CREDENTIALS`      | `/auth/token` with wrong password **or** unknown email (identical response by design). |
+| `409`  | `EMAIL_ALREADY_REGISTERED` | `/auth/register` with an email already in use (case-insensitive).                    |
+| `422`  | `VALIDATION_ERROR`         | Payload schema failure; per-field details in `errors[]` (`loc`, `msg`, `type`).      |
+
+> Emails are normalized to lowercase. Passwords: 8–128 characters, hashed with Argon2id. All 401 responses include `WWW-Authenticate: Bearer`.
+
 ### Sample Payload: Token Authentication (`POST /api/v1/auth/token`)
 
 Body (`application/json`):
