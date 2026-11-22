@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- PromoLedger: a ledger page with a reconciliation check mark. -->
+  <rect width="512" height="512" rx="112" fill="#4f46e5"/>
+  <rect x="136" y="104" width="240" height="304" rx="28" fill="#ffffff"/>
+  <rect x="176" y="160" width="160" height="20" rx="10" fill="#c7d2fe"/>
+  <rect x="176" y="208" width="160" height="20" rx="10" fill="#c7d2fe"/>
+  <rect x="176" y="256" width="104" height="20" rx="10" fill="#c7d2fe"/>
+  <path d="M190 330 l38 38 l92 -92" fill="none" stroke="#10b981" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

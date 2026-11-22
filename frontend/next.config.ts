@@ -1,3 +1,4 @@
+import { withSerwist } from "@serwist/turbopack";
 import type { NextConfig } from "next";
 
 // The browser talks only to this Next.js origin; API calls are proxied to FastAPI.
@@ -20,4 +21,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// withSerwist keeps esbuild out of the server bundle (it builds the service worker).
+export default withSerwist(nextConfig);

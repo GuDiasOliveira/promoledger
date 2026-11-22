@@ -4,8 +4,13 @@
     "tagline": "Ventas de campañas, conciliadas.",
     "loading": "Cargando…",
     "logout": "Cerrar sesión",
+    "logoutPending": "{count, plural, one {# cambio aún no se ha enviado} other {# cambios aún no se han enviado}}. Se enviarán la próxima vez que inicies sesión en este dispositivo. ¿Cerrar sesión de todos modos?",
     "language": "Idioma",
-    "back": "Volver"
+    "back": "Volver",
+    "online": "En línea",
+    "offline": "Sin conexión",
+    "pending": "{count, plural, one {# por enviar} other {# por enviar}}",
+    "offlineData": "No tienes conexión. Se muestran los datos guardados en este dispositivo."
   },
   "auth": {
     "loginTitle": "Iniciar sesión",
@@ -40,7 +45,50 @@
     "deliveryDate": "Fecha de entrega",
     "currency": "Moneda",
     "yourRoles": "Tus roles",
-    "range": "{start} – {end}"
+    "range": "{start} – {end}",
+    "newOrder": "Nuevo pedido",
+    "outbox": "Cola de envío",
+    "notFound": "Esta promoción no está disponible en este dispositivo.",
+    "notActive": "Solo se pueden registrar pedidos mientras la promoción esté activa."
+  },
+  "sell": {
+    "title": "Nuevo pedido",
+    "customer": "Cliente",
+    "searchCustomer": "Buscar por nombre o contacto",
+    "noCustomers": "No se encontraron clientes.",
+    "newCustomer": "Nuevo cliente",
+    "customerName": "Nombre del cliente",
+    "customerContact": "Teléfono o correo electrónico (opcional)",
+    "addCustomer": "Añadir cliente",
+    "changeCustomer": "Cambiar",
+    "products": "Productos",
+    "noProducts": "Todavía no hay productos disponibles. Conéctate a internet una vez para descargar el catálogo.",
+    "decrease": "Quitar un {name}",
+    "increase": "Añadir un {name}",
+    "total": "Total",
+    "totalHint": "Estimación. El precio final se confirma al enviar el pedido.",
+    "markPaidNow": "Pago recibido ahora",
+    "save": "Guardar pedido",
+    "saved": "Pedido guardado. Se enviará automáticamente.",
+    "another": "Registrar otro pedido",
+    "viewQueue": "Ver cola de envío"
+  },
+  "sync": {
+    "title": "Cola de envío",
+    "empty": "Todo se ha enviado.",
+    "status": {
+      "pending": "Pendiente de envío",
+      "failed": "Rechazado",
+      "conflict": "Conflicto"
+    },
+    "kind": {
+      "createCustomer": "Nuevo cliente: {name}",
+      "createOrder": "Pedido de {name}"
+    },
+    "attempts": "{count, plural, one {# intento} other {# intentos}}",
+    "retryNow": "Reintentar ahora",
+    "discard": "Descartar",
+    "confirmDiscard": "¿Descartar este cambio? No se enviará."
   },
   "errors": {
     "generic": "Algo salió mal. Inténtalo de nuevo.",
@@ -51,7 +99,13 @@
       "VALIDATION_ERROR": "Revisa la información resaltada.",
       "TOKEN_EXPIRED": "Tu sesión ha caducado. Inicia sesión de nuevo.",
       "NOT_AUTHENTICATED": "Inicia sesión para continuar.",
-      "PROMOTION_NOT_FOUND": "Promoción no encontrada."
+      "PROMOTION_NOT_FOUND": "Promoción no encontrada.",
+      "PROMOTION_NOT_ACTIVE": "La promoción no está aceptando pedidos.",
+      "PRODUCT_UNAVAILABLE": "Un producto de este pedido ya no está disponible.",
+      "CUSTOMER_NOT_FOUND": "El cliente de este pedido no se registró.",
+      "CUSTOMER_ID_CONFLICT": "Este cliente entra en conflicto con un registro existente.",
+      "IDEMPOTENCY_KEY_REUSED": "Este cambio entra en conflicto con otro ya enviado.",
+      "INSUFFICIENT_ROLE": "No tienes permiso para hacer esto."
     }
   }
 }

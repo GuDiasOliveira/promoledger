@@ -9,8 +9,9 @@ function keyPaths(value: unknown, prefix = ""): string[] {
   );
 }
 
+/** Argument names: simple `{name}` and ICU `{count, plural, ...}` (but not `{# item}`). */
 function placeholders(text: string): string[] {
-  return [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+  return [...new Set([...text.matchAll(/\{(\w+)\s*[,}]/g)].map((m) => m[1]))].sort();
 }
 
 describe("message catalogs", () => {

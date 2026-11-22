@@ -68,7 +68,12 @@ docker-compose.yml      # Local dev services (PostgreSQL 16)
 - **API Contract:** types are generated from the FastAPI OpenAPI schema — never hand-write request/response types. Re-run `npm run gen:api` after any backend contract change.
 - **i18n:** `next-intl`, locales `en-US` (default), `pt-BR`, `es-ES`; all UI text goes through `messages/*.json` (key parity is tested). Format numbers/dates/money with `Intl` in the viewer's locale; never assume a region-specific payment method in UI copy.
 - **Money:** never `Number`/`parseFloat` for amounts — use `lib/money.ts` (`bigint` cents, exact decimal strings to `Intl`).
+- **Offline model (Slice 4.2):** the UI reads from IndexedDB (Dexie, `lib/db.ts`) and refreshes it from the API when online; mutations go through the outbox (`lib/sync/`), written atomically with their optimistic record, with the `Idempotency-Key` fixed at creation. **Every local row is scoped by `userId`** (shared devices).
+- **Routes:** promotion-scoped pages are **static routes with `?id=`** (`/promotion/sell?id=…`), never dynamic segments, so one cached HTML serves every promotion offline. New pages must be added to `lib/pwa/shell.ts` (enforced by a test).
+- **Service worker (`app/sw.ts`, Serwist):** `/api/*` is `NetworkOnly` — API responses must never be cached by the SW (offline data lives per user in IndexedDB). `reloadOnOnline` stays disabled (it would wipe forms being typed).
 - **Known Trap — `<Activity>` route preservation:** Cache Components keeps up to 3 visited routes mounted but hidden, *with their state*. Wipe sensitive/transient state in a `useLayoutEffect` cleanup (see `components/auth-form.tsx`), and scope E2E locators to visible elements.
+- **Known Trap — horizontal overflow on phones:** anything wider than the screen widens the mobile layout viewport and pushes `position: fixed; bottom: 0` bars (e.g. "Save order") off-screen. E2E asserts `expectNoHorizontalOverflow`.
+- **Known Trap — `<output>` has role `status`:** don't locate messages with `getByRole("status")` on screens with quantity steppers.
 
 ### Frontend Verification Commands
 
@@ -76,6 +81,8 @@ docker-compose.yml      # Local dev services (PostgreSQL 16)
 - **Dev server:** `npm run dev` (backend must be running on `:8000`)
 - **Regenerate API types:** `npm run gen:api`
 - **Lint / Types / Unit tests / Build:** `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`
+- **E2E (Playwright, production build):** `npm run test:e2e` — starts its own backend (`:8001`) and frontend (`:3001`) and recreates the `promoledger_e2e` database on every run (never `promoledger_test`).
+- **PWA icons:** edit `public/icons/icon.svg`, then `node scripts/gen-icons.mjs`.
 
 ## 5. MVP Execution Roadmap (Vertical Slices)
 

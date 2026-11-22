@@ -24,6 +24,23 @@ export function getToken(): string | null {
   return current;
 }
 
+/**
+ * The user id (`sub` claim) of the current token, decoded locally so it is available
+ * offline. Used only to *scope local data* per user on shared devices — never trusted for
+ * authorization (the server verifies the signature).
+ */
+export function getUserId(token: string | null = current): string | null {
+  if (!token) return null;
+  try {
+    const payload = token.split(".")[1];
+    const json = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
+    const sub = (JSON.parse(json) as { sub?: unknown }).sub;
+    return typeof sub === "string" ? sub : null;
+  } catch {
+    return null;
+  }
+}
+
 export function setToken(token: string): void {
   current = token;
   try {

@@ -4,8 +4,13 @@
     "tagline": "Fundraising sales, reconciled.",
     "loading": "Loading…",
     "logout": "Log out",
+    "logoutPending": "{count, plural, one {# change has} other {# changes have}} not been sent yet. They will be sent the next time you log in on this device. Log out anyway?",
     "language": "Language",
-    "back": "Back"
+    "back": "Back",
+    "online": "Online",
+    "offline": "Offline",
+    "pending": "{count, plural, one {# to send} other {# to send}}",
+    "offlineData": "You are offline. Showing data saved on this device."
   },
   "auth": {
     "loginTitle": "Log in",
@@ -40,7 +45,50 @@
     "deliveryDate": "Delivery date",
     "currency": "Currency",
     "yourRoles": "Your roles",
-    "range": "{start} – {end}"
+    "range": "{start} – {end}",
+    "newOrder": "New order",
+    "outbox": "Sync queue",
+    "notFound": "This promotion is not available on this device.",
+    "notActive": "Orders can only be registered while the promotion is active."
+  },
+  "sell": {
+    "title": "New order",
+    "customer": "Customer",
+    "searchCustomer": "Search by name or contact",
+    "noCustomers": "No customers found.",
+    "newCustomer": "New customer",
+    "customerName": "Customer name",
+    "customerContact": "Phone or email (optional)",
+    "addCustomer": "Add customer",
+    "changeCustomer": "Change",
+    "products": "Products",
+    "noProducts": "No products available yet. Connect to the internet once to download the catalog.",
+    "decrease": "Remove one {name}",
+    "increase": "Add one {name}",
+    "total": "Total",
+    "totalHint": "Estimate. The final price is confirmed when the order is sent.",
+    "markPaidNow": "Payment received now",
+    "save": "Save order",
+    "saved": "Order saved. It will be sent automatically.",
+    "another": "Register another order",
+    "viewQueue": "View sync queue"
+  },
+  "sync": {
+    "title": "Sync queue",
+    "empty": "Everything has been sent.",
+    "status": {
+      "pending": "Waiting to send",
+      "failed": "Rejected",
+      "conflict": "Conflict"
+    },
+    "kind": {
+      "createCustomer": "New customer: {name}",
+      "createOrder": "Order for {name}"
+    },
+    "attempts": "{count, plural, one {# attempt} other {# attempts}}",
+    "retryNow": "Try again now",
+    "discard": "Discard",
+    "confirmDiscard": "Discard this change? It will not be sent."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -51,7 +99,13 @@
       "VALIDATION_ERROR": "Please check the highlighted information.",
       "TOKEN_EXPIRED": "Your session has expired. Please log in again.",
       "NOT_AUTHENTICATED": "Please log in to continue.",
-      "PROMOTION_NOT_FOUND": "Promotion not found."
+      "PROMOTION_NOT_FOUND": "Promotion not found.",
+      "PROMOTION_NOT_ACTIVE": "The promotion is not accepting orders.",
+      "PRODUCT_UNAVAILABLE": "A product in this order is no longer available.",
+      "CUSTOMER_NOT_FOUND": "The customer of this order was not registered.",
+      "CUSTOMER_ID_CONFLICT": "This customer conflicts with an existing record.",
+      "IDEMPOTENCY_KEY_REUSED": "This change conflicts with one already sent.",
+      "INSUFFICIENT_ROLE": "You do not have permission to do this."
     }
   }
 }

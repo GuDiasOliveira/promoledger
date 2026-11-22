@@ -14,6 +14,8 @@ import { clearToken } from "@/lib/auth/session";
 import { messages } from "@/lib/i18n/config";
 import { getLocale, subscribeLocale } from "@/lib/i18n/store";
 
+import { SyncRunner } from "./sync-runner";
+
 /** Any 401 means the token is unusable: drop it so the guard sends the user to login. */
 function onAuthError(error: unknown): void {
   if (error instanceof ApiError && error.status === 401) clearToken();
@@ -53,6 +55,7 @@ export function Providers({ children }: { children: ReactNode }) {
         messages={messages[locale]}
         timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
       >
+        <SyncRunner />
         {children}
       </NextIntlClientProvider>
     </QueryClientProvider>
