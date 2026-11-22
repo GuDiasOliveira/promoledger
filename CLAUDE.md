@@ -74,6 +74,9 @@ docker-compose.yml      # Local dev services (PostgreSQL 16)
 - **Service worker (`app/sw.ts`, Serwist):** `/api/*` is `NetworkOnly` — API responses must never be cached by the SW (offline data lives per user in IndexedDB). `reloadOnOnline` stays disabled (it would wipe forms being typed).
 - **Known Trap — `<Activity>` route preservation:** Cache Components keeps up to 3 visited routes mounted but hidden, *with their state*. Wipe sensitive/transient state in a `useLayoutEffect` cleanup (see `components/auth-form.tsx`), and scope E2E locators to visible elements.
 - **Known Trap — horizontal overflow on phones:** anything wider than the screen widens the mobile layout viewport and pushes `position: fixed; bottom: 0` bars (e.g. "Save order") off-screen. E2E asserts `expectNoHorizontalOverflow`.
+- **Admin/viewer screens (Slice 4.4):** **online-only** (React Query straight from the API; no IndexedDB, no outbox). On `CONCURRENCY_CONFLICT` the admin screen reloads the order and asks the admin to act again — no automatic retry. Role gating mirrors the API (viewer = read-only, audit trail admin-only). Admin E2E specs are `e2e/admin-*.spec.ts` and run in the `desktop` Playwright project.
+- **Known Trap — pt-BR plural of zero:** CLDR puts **0 in the `one` category for `pt-BR`** (unlike en-US, es-ES and pt-PT), so `{count, plural, one {# pedido} …}` renders "0 pedido". Add an explicit `=0` case wherever 0 can be shown (tested in `lib/i18n/config.test.ts`).
+- **Known Trap — Next's route announcer is a `role="alert"`:** scope E2E alert locators to `main`.
 - **Known Trap — `<output>` has role `status`:** don't locate messages with `getByRole("status")` on screens with quantity steppers.
 
 ### Frontend Verification Commands

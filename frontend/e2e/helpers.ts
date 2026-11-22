@@ -44,6 +44,7 @@ export interface Scenario {
   seller: Account;
   sellerMemberId: string;
   addSeller: (label: string) => Promise<Account & { memberId: string }>;
+  addMember: (label: string, roles: string[]) => Promise<Account & { memberId: string }>;
   orders: () => Promise<ServerOrder[]>;
 }
 
@@ -84,15 +85,16 @@ export async function seedScenario(): Promise<Scenario> {
   ]) {
     await call(`${base}/products`, { token: admin.token, method: "POST", body: product });
   }
-  const addSeller = async (label: string) => {
+  const addMember = async (label: string, roles: string[]) => {
     const account = await createAccount(label);
     const member = await call<{ id: string }>(`${base}/members`, {
       token: admin.token,
       method: "POST",
-      body: { email: account.email, roles: ["seller"] },
+      body: { email: account.email, roles },
     });
     return { ...account, memberId: member.id };
   };
+  const addSeller = (label: string) => addMember(label, ["seller"]);
   const seller = await addSeller("seller");
   return {
     promotionId: promotion.id,
@@ -100,6 +102,7 @@ export async function seedScenario(): Promise<Scenario> {
     seller,
     sellerMemberId: seller.memberId,
     addSeller,
+    addMember,
     orders: async () =>
       (await call<{ items: ServerOrder[] }>(`${base}/orders?size=100`, { token: admin.token })).items,
   };
@@ -194,28 +197,32 @@ export interface ServerOrderDetail extends ServerOrder {
 export async function createOrderAsSeller(
   s: Scenario,
   customerName: string,
-  { markPaidNow = false }: { markPaidNow?: boolean } = {},
+  {
+    markPaidNow = false,
+    seller = s.seller,
+    lines = [["Chocolate Egg", 1]],
+  }: { markPaidNow?: boolean; seller?: Account; lines?: [string, number][] } = {},
 ): Promise<string> {
   const base = `/promotions/${s.promotionId}`;
   const customer = await call<{ id: string }>(`${base}/customers`, {
-    token: s.seller.token,
+    token: seller.token,
     method: "POST",
     body: { name: customerName },
   });
   const products = await call<{ items: { id: string; name: string }[] }>(`${base}/products`, {
-    token: s.seller.token,
+    token: seller.token,
   });
-  const egg = products.items.find((p) => p.name === "Chocolate Egg")!;
+  const productId = (name: string) => products.items.find((p) => p.name === name)!.id;
   const res = await fetch(`${API_URL}${base}/orders`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${s.seller.token}`,
+      authorization: `Bearer ${seller.token}`,
       "idempotency-key": crypto.randomUUID(),
     },
     body: JSON.stringify({
       customer_id: customer.id,
-      items: [{ product_id: egg.id, quantity: 1 }],
+      items: lines.map(([name, quantity]) => ({ product_id: productId(name), quantity })),
       mark_paid_now: markPaidNow,
     }),
   });
@@ -241,6 +248,16 @@ export async function adminTransition(
   });
   if (!res.ok) throw new Error(`admin ${path} -> ${res.status}: ${await res.text()}`);
   return (await res.json()) as ServerOrderDetail;
+}
+
+export async function summaryFromApi(s: Scenario) {
+  return call<{
+    total_revenue: string;
+    collected_amount: string;
+    outstanding_amount: string;
+    units_ordered: number;
+    units_delivered: number;
+  }>(`/promotions/${s.promotionId}/reconciliation/summary`, { token: s.admin.token });
 }
 
 export async function serverOrder(s: Scenario, orderId: string): Promise<ServerOrderDetail> {

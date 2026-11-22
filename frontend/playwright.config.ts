@@ -15,11 +15,16 @@ export default defineConfig({
   workers: 1,
   reporter: [["list"]],
   use: {
-    ...devices["Pixel 7"], // mobile-first: the seller flows run on phones
     baseURL: `http://localhost:${WEB_PORT}`,
     locale: "en-US",
     trace: "retain-on-failure",
   },
+  projects: [
+    // Mobile-first: the seller flows run on phones.
+    { name: "mobile", testIgnore: /admin-.*\.spec\.ts/, use: { ...devices["Pixel 7"] } },
+    // The admin dashboard is a desktop tool (Slice 4.4, decision 3).
+    { name: "desktop", testMatch: /admin-.*\.spec\.ts/, use: { ...devices["Desktop Chrome"] } },
+  ],
   webServer: [
     {
       command: `uv run uvicorn app.main:app --port ${API_PORT}`,

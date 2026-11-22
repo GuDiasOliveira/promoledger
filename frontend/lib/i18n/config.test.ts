@@ -1,3 +1,4 @@
+import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
 
 import { defaultLocale, locales, matchLocale, messages } from "./config";
@@ -51,5 +52,23 @@ describe("matchLocale", () => {
     [[], "en-US"],
   ])("%j -> %s", (preferred, expected) => {
     expect(matchLocale(preferred)).toBe(expected);
+  });
+});
+
+describe("plural rules per locale (CLDR)", () => {
+  const count = (locale: (typeof locales)[number], n: number) =>
+    createTranslator({ locale, messages: messages[locale] })("admin.count", { count: n });
+
+  // In pt-BR the CLDR "one" category covers 0 AND 1, unlike English: "0 pedido" is wrong.
+  it.each([
+    ["en-US", 0, "0 orders"],
+    ["en-US", 1, "1 order"],
+    ["pt-BR", 0, "0 pedidos"],
+    ["pt-BR", 1, "1 pedido"],
+    ["pt-BR", 2, "2 pedidos"],
+    ["es-ES", 0, "0 pedidos"],
+    ["es-ES", 1, "1 pedido"],
+  ] as const)("%s %i -> %s", (locale, n, expected) => {
+    expect(count(locale, n)).toBe(expected);
   });
 });

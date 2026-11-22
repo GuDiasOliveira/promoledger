@@ -50,7 +50,8 @@
     "outbox": "Fila de envio",
     "notFound": "Esta promoção não está disponível neste aparelho.",
     "notActive": "Só é possível registrar pedidos enquanto a promoção estiver ativa.",
-    "myOrders": "Meus pedidos"
+    "myOrders": "Meus pedidos",
+    "dashboard": "Painel"
   },
   "sell": {
     "title": "Novo pedido",
@@ -173,5 +174,63 @@
     "offline": "Conecte-se à internet para ver o estado atual e resolver.",
     "rejected": "Uma ação foi recusada",
     "ok": "Ok, entendi"
+  },
+  "admin": {
+    "nav": {
+      "dashboard": "Painel",
+      "orders": "Pedidos",
+      "audit": "Auditoria"
+    },
+    "onlineOnly": "Esta área precisa de conexão com a internet.",
+    "kpi": {
+      "revenue": "Receita",
+      "collected": "Recebido",
+      "outstanding": "A receber",
+      "units": "Unidades entregues",
+      "unitsValue": "{delivered} de {ordered}"
+    },
+    "breakdown": "Pedidos por status",
+    "count": "{count, plural, =0 {# pedidos} one {# pedido} other {# pedidos}}",
+    "divergences": "Divergências: entregues e não pagos",
+    "noDivergences": "Nenhuma divergência.",
+    "leaderboard": "Ranking de vendedores",
+    "noSales": "Ainda não há vendas.",
+    "col": {
+      "seller": "Vendedor",
+      "orders": "Pedidos",
+      "units": "Unidades",
+      "gross": "Receita bruta",
+      "settled": "Concluído",
+      "settledPct": "% concluído",
+      "customer": "Cliente",
+      "status": "Status",
+      "total": "Total",
+      "date": "Data",
+      "event": "Evento",
+      "actor": "Por",
+      "reason": "Motivo",
+      "order": "Pedido"
+    },
+    "orders": {
+      "title": "Todos os pedidos",
+      "status": "Status",
+      "any": "Todos",
+      "seller": "Vendedor",
+      "customer": "Cliente",
+      "customerSearch": "Buscar cliente (2+ letras)",
+      "clear": "Limpar",
+      "empty": "Nenhum pedido com esses filtros.",
+      "page": "Página {page} de {pages}",
+      "prev": "Anterior",
+      "next": "Próxima"
+    },
+    "order": {
+      "seller": "Vendedor",
+      "conflict": "Este pedido foi alterado por outra pessoa. Confira o estado atual e tente de novo.",
+      "open": "Abrir pedido"
+    },
+    "audit": {
+      "anyEvent": "Todos os eventos"
+    }
   }
 }

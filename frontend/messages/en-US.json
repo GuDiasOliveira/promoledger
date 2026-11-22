@@ -50,7 +50,8 @@
     "outbox": "Sync queue",
     "notFound": "This promotion is not available on this device.",
     "notActive": "Orders can only be registered while the promotion is active.",
-    "myOrders": "My orders"
+    "myOrders": "My orders",
+    "dashboard": "Dashboard"
   },
   "sell": {
     "title": "New order",
@@ -173,5 +174,63 @@
     "offline": "Connect to the internet to see the current state and resolve this.",
     "rejected": "An action was rejected",
     "ok": "OK, got it"
+  },
+  "admin": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "orders": "Orders",
+      "audit": "Audit trail"
+    },
+    "onlineOnly": "This area needs an internet connection.",
+    "kpi": {
+      "revenue": "Revenue",
+      "collected": "Collected",
+      "outstanding": "Outstanding",
+      "units": "Units delivered",
+      "unitsValue": "{delivered} of {ordered}"
+    },
+    "breakdown": "Orders by status",
+    "count": "{count, plural, one {# order} other {# orders}}",
+    "divergences": "Divergences: delivered but not paid",
+    "noDivergences": "No divergences.",
+    "leaderboard": "Seller ranking",
+    "noSales": "No sales yet.",
+    "col": {
+      "seller": "Seller",
+      "orders": "Orders",
+      "units": "Units",
+      "gross": "Gross revenue",
+      "settled": "Settled",
+      "settledPct": "% settled",
+      "customer": "Customer",
+      "status": "Status",
+      "total": "Total",
+      "date": "Date",
+      "event": "Event",
+      "actor": "By",
+      "reason": "Reason",
+      "order": "Order"
+    },
+    "orders": {
+      "title": "All orders",
+      "status": "Status",
+      "any": "All",
+      "seller": "Seller",
+      "customer": "Customer",
+      "customerSearch": "Search customer (2+ letters)",
+      "clear": "Clear",
+      "empty": "No orders match these filters.",
+      "page": "Page {page} of {pages}",
+      "prev": "Previous",
+      "next": "Next"
+    },
+    "order": {
+      "seller": "Seller",
+      "conflict": "This order was changed by someone else. Review the current state and try again.",
+      "open": "Open order"
+    },
+    "audit": {
+      "anyEvent": "All events"
+    }
   }
 }

@@ -55,6 +55,15 @@ function PromotionHome({ userId, promotion: p }: PromotionScope) {
         </dl>
       </Card>
 
+      {p.roles.includes("promotion_admin") || p.roles.includes("promotion_viewer") ? (
+        <Link
+          href={`/promotion/admin?id=${p.id}`}
+          className="flex min-h-14 items-center justify-center rounded-xl border border-indigo-300 px-4 font-medium text-indigo-700 dark:border-indigo-800 dark:text-indigo-300"
+        >
+          {t("promotion.dashboard")}
+        </Link>
+      ) : null}
+
       {canSell ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {p.status === "ACTIVE" ? (
