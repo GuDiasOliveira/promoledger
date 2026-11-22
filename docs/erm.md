@@ -94,6 +94,7 @@ erDiagram
         uuid seller_member_id FK
         uuid customer_id FK
         varchar idempotency_key UK "UUIDv4, prevents duplicate mobile retries"
+        char idempotency_fingerprint "SHA-256 of canonical create payload"
         integer version "optimistic locking counter, starts at 1"
         timestamptz paid_at "nullable"
         timestamptz delivered_at "nullable"
@@ -238,6 +239,8 @@ Buyer registered within a campaign context.
 | `contact`      | `VARCHAR(255)` | NULL                                              | Optional phone/WhatsApp or email. |
 | `created_at`   | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                         | Creation timestamp.               |
 
+> **Offline creation:** `id` may be supplied by the client as a UUIDv4, so an offline-captured customer can be referenced by a queued order before either is synced. Re-sending the same `id` with the same data is an idempotent no-op.
+
 ---
 
 ### 2.8 `ORDER`
@@ -253,6 +256,7 @@ Core transactional ledger entity tracking a customer purchase mediated by a fiel
 | `seller_member_id` | `UUID`        | NOT NULL, FK -> `PROMOTION_MEMBER(id)` ON DELETE RESTRICT | Attribution to the field seller.                                  |
 | `customer_id`      | `UUID`        | NOT NULL, FK -> `CUSTOMER(id)` ON DELETE RESTRICT         | Target buyer.                                                     |
 | `idempotency_key`  | `VARCHAR(64)` | NOT NULL, UNIQUE                                          | Client-generated UUIDv4 preventing duplicate network submissions. |
+| `idempotency_fingerprint` | `CHAR(64)` | NOT NULL                                     | SHA-256 of the canonical create payload (promotion, seller, customer, sorted items, `mark_paid_now`). Distinguishes a safe retry from a key reused with a different payload. |
 | `version`          | `INTEGER`     | NOT NULL, default `1`                                     | Incremental counter for Optimistic Concurrency Control (OCC).     |
 | `paid_at`          | `TIMESTAMPTZ` | NULL                                                      | Timestamp of manual cash/pix payment confirmation.                |
 | `delivered_at`     | `TIMESTAMPTZ` | NULL                                                      | Timestamp of physical handover of goods.                          |
@@ -263,6 +267,8 @@ Core transactional ledger entity tracking a customer purchase mediated by a fiel
 > **Invariants & Checks:**
 >
 > - An order cannot be modified once `cancelled_at` is set.
+> - Orders can only be **created** while `PROMOTION.status = 'ACTIVE'`. The sales-window dates are not enforced server-side, because offline captures may sync after `last_sales_date`; closing sales is an explicit admin action (`ACTIVE → CLOSED`).
+> - An idempotent retry (same key + same fingerprint) returns the existing order even if the promotion has since been closed.
 > - `paid_at` and `delivered_at` are tracked independently to allow immediate real-time divergence queries.
 
 ---
@@ -295,6 +301,8 @@ Append-only immutable event log capturing all state changes and reversions.
 | `event_type`      | `VARCHAR(32)` | NOT NULL, CHECK in `('PAYMENT_MARKED', 'PAYMENT_REVOKED', 'DELIVERY_MARKED', 'DELIVERY_REVOKED', 'ORDER_CANCELLED')` | Transition type.                                                               |
 | `reason`          | `TEXT`        | NULL                                                                                                                 | Mandatory explanation when revoking a payment/delivery or cancelling an order. |
 | `created_at`      | `TIMESTAMPTZ` | NOT NULL, default `NOW()`                                                                                            | Immutable event timestamp.                                                     |
+
+> **Append-only enforcement:** a `BEFORE UPDATE OR DELETE` trigger (`trg_order_audit_event_append_only`) raises an exception, so the log is immutable even for the application's own database role. As a consequence, an order that has audit events cannot be deleted (orders are never deleted by design).
 
 ---
 

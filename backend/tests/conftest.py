@@ -8,6 +8,7 @@ Alembic migrations once per session.
 import asyncio
 import os
 from collections.abc import AsyncIterator, Awaitable, Callable
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -24,8 +25,8 @@ from sqlalchemy.ext.asyncio import (
 from app.core.database import get_db_session
 from app.core.security import create_access_token, hash_password
 from app.main import create_app
-from app.models import Institution, Promotion, PromotionMember, User
-from app.models.enums import Role
+from app.models import Customer, Institution, Product, Promotion, PromotionMember, User
+from app.models.enums import PromotionStatus, Role
 from app.schemas.promotion import PromotionCreate
 from app.services.promotions import create_promotion
 
@@ -173,5 +174,59 @@ def member_factory(db_session: AsyncSession, user_factory: UserFactory) -> Membe
         db_session.add(member)
         await db_session.flush()
         return member
+
+    return _create
+
+
+# --- catalog & orders -----------------------------------------------------------------------
+
+
+@pytest.fixture
+async def active_promotion(db_session: AsyncSession, promotion: Promotion) -> Promotion:
+    """`promotion` (admin = `user`) switched to ACTIVE so orders can be created."""
+    promotion.status = PromotionStatus.ACTIVE
+    await db_session.flush()
+    return promotion
+
+
+@pytest.fixture
+async def seller(active_promotion: Promotion, member_factory: MemberFactory) -> PromotionMember:
+    return await member_factory(active_promotion, Role.SELLER)
+
+
+ProductFactory = Callable[..., Awaitable[Product]]
+
+
+@pytest.fixture
+def product_factory(db_session: AsyncSession) -> ProductFactory:
+    async def _create(
+        promotion: Promotion,
+        *,
+        name: str = "Chocolate Egg",
+        price: str = "10.00",
+        is_active: bool = True,
+    ) -> Product:
+        product = Product(
+            promotion_id=promotion.id, name=name, price=Decimal(price), is_active=is_active
+        )
+        db_session.add(product)
+        await db_session.flush()
+        return product
+
+    return _create
+
+
+CustomerFactory = Callable[..., Awaitable[Customer]]
+
+
+@pytest.fixture
+def customer_factory(db_session: AsyncSession) -> CustomerFactory:
+    async def _create(
+        promotion: Promotion, *, name: str = "Ana Souza", contact: str | None = None
+    ) -> Customer:
+        customer = Customer(promotion_id=promotion.id, name=name, contact=contact)
+        db_session.add(customer)
+        await db_session.flush()
+        return customer
 
     return _create

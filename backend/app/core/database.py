@@ -1,6 +1,7 @@
 from collections.abc import AsyncIterator
 
 from sqlalchemy import MetaData
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -39,6 +40,11 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False,
     autoflush=False,
 )
+
+
+def violates_constraint(exc: IntegrityError, constraint_name: str) -> bool:
+    """True if the IntegrityError was raised by the named constraint/index."""
+    return constraint_name in str(exc.orig)
 
 
 async def get_db_session() -> AsyncIterator[AsyncSession]:

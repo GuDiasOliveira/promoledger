@@ -1,10 +1,9 @@
 import uuid
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
 from typing import Annotated
 
 import jwt
-from fastapi import Depends
+from fastapi import Depends, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +14,7 @@ from app.core.security import decode_access_token
 from app.models import Promotion, PromotionMember, User
 from app.models.enums import Role
 from app.schemas.pagination import PageParams, page_params
+from app.services.access import PromotionContext
 
 _bearer_scheme = HTTPBearer(auto_error=False)
 _WWW_AUTHENTICATE = {"WWW-Authenticate": "Bearer"}
@@ -50,17 +50,6 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 # --- Contextual RBAC (PROMOTION_MEMBER) -----------------------------------------------------
-
-
-@dataclass(frozen=True)
-class PromotionContext:
-    """The promotion addressed by the path plus the caller's active membership in it."""
-
-    promotion: Promotion
-    member: PromotionMember
-
-    def has_any_role(self, *roles: Role) -> bool:
-        return not roles or any(role in self.member.roles for role in roles)
 
 
 def require_promotion_role(*roles: Role) -> Callable[..., Awaitable[PromotionContext]]:
@@ -103,3 +92,24 @@ PromotionMemberContext = Annotated[PromotionContext, Depends(require_promotion_r
 PromotionAdminContext = Annotated[
     PromotionContext, Depends(require_promotion_role(Role.PROMOTION_ADMIN))
 ]
+PromotionSellerContext = Annotated[PromotionContext, Depends(require_promotion_role(Role.SELLER))]
+
+
+# --- Idempotency ----------------------------------------------------------------------------
+
+
+async def get_idempotency_key(
+    idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+) -> uuid.UUID:
+    if not idempotency_key:
+        raise AppError(400, "IDEMPOTENCY_KEY_REQUIRED", "The Idempotency-Key header is required.")
+    try:
+        key = uuid.UUID(idempotency_key)
+    except ValueError as exc:
+        raise AppError(400, "INVALID_IDEMPOTENCY_KEY", "Idempotency-Key must be a UUIDv4.") from exc
+    if key.version != 4:
+        raise AppError(400, "INVALID_IDEMPOTENCY_KEY", "Idempotency-Key must be a UUIDv4.")
+    return key
+
+
+IdempotencyKey = Annotated[uuid.UUID, Depends(get_idempotency_key)]

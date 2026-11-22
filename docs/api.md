@@ -16,6 +16,7 @@ This document specifies the RESTful API design conventions, HTTP status codes, h
 ### 1.2 Monetary Representation
 
 - **Strict Rule:** Currency values MUST be serialized as exact decimal strings (e.g., `"19.90"`) or integer cents (e.g., `1990`). Floating-point numbers are prohibited in requests and responses.
+- **Implementation:** PromoLedger uses decimal strings. Request money fields MUST be JSON strings matching `^\d{1,8}(\.\d{1,2})?$` (e.g. `"19.9"` or `"19.90"`); JSON numbers are rejected with `422`. Responses always use exactly two decimal places (`"19.90"`).
 
 ### 1.3 Standard Headers
 
@@ -222,6 +223,11 @@ All fields optional: `name`, `sales_start_date`, `last_sales_date`, `delivery_da
 | `GET`  | `/api/v1/promotions/{id}/customers` | `MEMBER` | Search/list customers registered in this promotion (query param: `?q=name_or_contact`). |
 | `POST` | `/api/v1/promotions/{id}/customers` | `SELLER` | Quick-register a customer before or during order capture.                               |
 
+**Body:** `{ "id": "<optional client UUIDv4>", "name": "Ana", "contact": "+55 11 99999-0000" }`
+
+- Without `id`: the server generates it → `201 Created`.
+- With `id` (offline capture): first call → `201`; re-sending the same `id` with the same `name`/`contact` → `200 OK` with the existing customer; same `id` with different data (or from another promotion) → `409 CUSTOMER_ID_CONFLICT`.
+
 ---
 
 ## 7. Orders & Line Items (`/promotions/{id}/orders`)
@@ -262,6 +268,37 @@ Content-Type: application/json
   "mark_paid_now": false
 }
 ```
+
+### Order Creation Semantics
+
+1. `Idempotency-Key` header is required and must be a UUIDv4 (`400 IDEMPOTENCY_KEY_REQUIRED` / `400 INVALID_IDEMPOTENCY_KEY`).
+2. **First request** → `201 Created` + `Location`.
+3. **Retry** (same key, same payload, same seller & promotion) → `200 OK` with the existing order and header `Idempotent-Replayed: true`. Checked *before* any other rule, so a retry succeeds even if the promotion was closed meanwhile.
+4. **Same key, different payload** (or another seller/promotion) → `409 IDEMPOTENCY_KEY_REUSED`.
+5. Promotion must be `ACTIVE` (`400 PROMOTION_NOT_ACTIVE`). Products must be active and belong to the promotion (`400 PRODUCT_UNAVAILABLE`). Customer must belong to the promotion (`404 CUSTOMER_NOT_FOUND`).
+6. `items`: 1–50 lines, `quantity` 1–1000, no repeated `product_id` (consolidate quantities client-side; `422` otherwise).
+7. `unit_price` is snapshotted from `PRODUCT.price` in the same transaction. `mark_paid_now: true` sets `paid_at` and appends a `PAYMENT_MARKED` audit event.
+
+### Order Listing & Visibility
+
+- A member whose roles are only `seller` sees only their own orders (the `seller_member_id` filter is ignored for them); `promotion_admin` / `promotion_viewer` see all.
+- `status_classification` filter values (ERM §3): `UNPAID_PENDING`, `PAID_PENDING`, `DIVERGENCE`, `SETTLED`, `CANCELLED`.
+- Each order includes `customer`, `items` (with `unit_price` and `line_total`), `total_amount`, `version` and `status_classification`. `GET .../orders/{order_id}` also includes `audit_events`. An order outside the caller's visibility → `404 ORDER_NOT_FOUND`.
+
+### Catalog, Customers & Orders Error Codes
+
+| Status | `code`                     | When                                                                     |
+| :----- | :------------------------- | :----------------------------------------------------------------------- |
+| `400`  | `IDEMPOTENCY_KEY_REQUIRED` | Missing `Idempotency-Key` header.                                        |
+| `400`  | `INVALID_IDEMPOTENCY_KEY`  | Header is not a UUIDv4.                                                  |
+| `400`  | `PROMOTION_NOT_ACTIVE`     | Order creation while promotion is `DRAFT` or `CLOSED`.                   |
+| `400`  | `PRODUCT_UNAVAILABLE`      | Item references an inactive product or one from another promotion.       |
+| `403`  | `INSUFFICIENT_ROLE`        | e.g. non-admin passing `include_inactive=true` on products.              |
+| `404`  | `PRODUCT_NOT_FOUND`        | `product_id` not in this promotion.                                      |
+| `404`  | `CUSTOMER_NOT_FOUND`       | `customer_id` not in this promotion.                                     |
+| `404`  | `ORDER_NOT_FOUND`          | Unknown order or outside the caller's visibility.                        |
+| `409`  | `IDEMPOTENCY_KEY_REUSED`   | Key already used with a different payload / seller / promotion.          |
+| `409`  | `CUSTOMER_ID_CONFLICT`     | Client-supplied customer `id` already exists with different data.        |
 
 ---
 

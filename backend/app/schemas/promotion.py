@@ -5,15 +5,7 @@ from typing import Annotated, Self
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
 from app.models.enums import PromotionStatus, Role
-from app.schemas.common import NonBlankName, NormalizedEmail
-
-
-def _reject_explicit_nulls(model: BaseModel) -> None:
-    """PATCH semantics: omitted = unchanged; explicit `null` is not a valid value."""
-    nulls = [name for name in model.model_fields_set if getattr(model, name) is None]
-    if nulls:
-        raise ValueError(f"Fields cannot be null: {', '.join(sorted(nulls))}")
-
+from app.schemas.common import NonBlankName, NormalizedEmail, reject_explicit_nulls
 
 # --- promotions -----------------------------------------------------------------------------
 
@@ -35,7 +27,7 @@ class PromotionUpdate(BaseModel):
 
     @model_validator(mode="after")
     def _no_nulls(self) -> Self:
-        _reject_explicit_nulls(self)
+        reject_explicit_nulls(self)
         return self
 
 
@@ -75,7 +67,7 @@ class MemberUpdate(BaseModel):
     def _validate(self) -> Self:
         if not self.model_fields_set:
             raise ValueError("Provide at least one of: roles, revoked")
-        _reject_explicit_nulls(self)
+        reject_explicit_nulls(self)
         return self
 
 
