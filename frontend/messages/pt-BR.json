@@ -1,0 +1,57 @@
+{
+  "common": {
+    "appName": "PromoLedger",
+    "tagline": "Vendas de campanhas, conciliadas.",
+    "loading": "Carregando…",
+    "logout": "Sair",
+    "language": "Idioma",
+    "back": "Voltar"
+  },
+  "auth": {
+    "loginTitle": "Entrar",
+    "registerTitle": "Crie sua conta",
+    "name": "Nome completo",
+    "email": "E-mail",
+    "password": "Senha",
+    "passwordHint": "No mínimo 8 caracteres.",
+    "submitLogin": "Entrar",
+    "submitRegister": "Criar conta",
+    "noAccount": "Primeira vez aqui?",
+    "goRegister": "Crie uma conta",
+    "haveAccount": "Já tem uma conta?",
+    "goLogin": "Entrar"
+  },
+  "promotions": {
+    "title": "Suas promoções",
+    "empty": "Você ainda não participa de nenhuma promoção. Peça a um administrador da promoção para adicionar você pelo seu e-mail.",
+    "status": {
+      "DRAFT": "Rascunho",
+      "ACTIVE": "Ativa",
+      "CLOSED": "Encerrada"
+    },
+    "roles": {
+      "seller": "Vendedor",
+      "promotion_admin": "Administrador",
+      "promotion_viewer": "Observador"
+    }
+  },
+  "promotion": {
+    "salesWindow": "Período de vendas",
+    "deliveryDate": "Data de entrega",
+    "currency": "Moeda",
+    "yourRoles": "Seus papéis",
+    "range": "{start} – {end}"
+  },
+  "errors": {
+    "generic": "Algo deu errado. Tente novamente.",
+    "network": "Parece que você está sem conexão. Verifique sua internet e tente novamente.",
+    "codes": {
+      "INVALID_CREDENTIALS": "E-mail ou senha incorretos.",
+      "EMAIL_ALREADY_REGISTERED": "Já existe uma conta com este e-mail.",
+      "VALIDATION_ERROR": "Verifique as informações destacadas.",
+      "TOKEN_EXPIRED": "Sua sessão expirou. Entre novamente.",
+      "NOT_AUTHENTICATED": "Entre para continuar.",
+      "PROMOTION_NOT_FOUND": "Promoção não encontrada."
+    }
+  }
+}

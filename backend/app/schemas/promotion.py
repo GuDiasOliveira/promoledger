@@ -4,7 +4,7 @@ from typing import Annotated, Self
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
-from app.models.enums import PromotionStatus, Role
+from app.models.enums import Currency, PromotionStatus, Role
 from app.schemas.common import NonBlankName, NormalizedEmail, reject_explicit_nulls
 
 # --- promotions -----------------------------------------------------------------------------
@@ -16,6 +16,7 @@ class PromotionCreate(BaseModel):
     sales_start_date: date
     last_sales_date: date
     delivery_date: date
+    currency: Currency
 
 
 class PromotionUpdate(BaseModel):
@@ -24,6 +25,7 @@ class PromotionUpdate(BaseModel):
     last_sales_date: date | None = None
     delivery_date: date | None = None
     status: PromotionStatus | None = None
+    currency: Currency | None = None
 
     @model_validator(mode="after")
     def _no_nulls(self) -> Self:
@@ -40,6 +42,7 @@ class PromotionResponse(BaseModel):
     sales_start_date: date
     last_sales_date: date
     delivery_date: date
+    currency: Currency
     created_at: datetime
     updated_at: datetime
 

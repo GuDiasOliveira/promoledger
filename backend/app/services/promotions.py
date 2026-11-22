@@ -1,10 +1,17 @@
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import AppError
-from app.models import Institution, Promotion, PromotionInstitution, PromotionMember, User
+from app.models import (
+    Institution,
+    Order,
+    Promotion,
+    PromotionInstitution,
+    PromotionMember,
+    User,
+)
 from app.models.enums import PromotionStatus, Role
 from app.schemas.pagination import PageParams
 from app.schemas.promotion import PromotionCreate, PromotionUpdate
@@ -36,6 +43,15 @@ def _validate_status_transition(current: PromotionStatus, target: PromotionStatu
         )
 
 
+async def _ensure_currency_unlocked(session: AsyncSession, promotion: Promotion) -> None:
+    """All amounts are denominated in the promotion currency: freeze it once orders exist."""
+    has_orders = await session.scalar(select(exists().where(Order.promotion_id == promotion.id)))
+    if has_orders:
+        raise AppError(
+            400, "CURRENCY_LOCKED", "Currency cannot change after the promotion has orders."
+        )
+
+
 async def create_promotion(
     session: AsyncSession, data: PromotionCreate, creator: User
 ) -> Promotion:
@@ -50,6 +66,7 @@ async def create_promotion(
         sales_start_date=data.sales_start_date,
         last_sales_date=data.last_sales_date,
         delivery_date=data.delivery_date,
+        currency=data.currency,
     )
     session.add(promotion)
     await session.flush()  # assigns promotion.id via RETURNING
@@ -92,6 +109,8 @@ async def update_promotion(
     )
     if "status" in changes:
         _validate_status_transition(PromotionStatus(promotion.status), changes["status"])
+    if changes.get("currency", promotion.currency) != promotion.currency:
+        await _ensure_currency_unlocked(session, promotion)
 
     for field, value in changes.items():
         setattr(promotion, field, value)

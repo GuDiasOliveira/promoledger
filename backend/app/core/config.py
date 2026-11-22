@@ -15,7 +15,8 @@ class Settings(BaseSettings):
     # Local-only default; MUST be overridden via environment outside local/test.
     JWT_SECRET_KEY: str = "local-dev-insecure-secret-key-change-me-0123456789abcdef"
     JWT_ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    # 7 days: offline sellers may sync long after login (refresh tokens: post-MVP backlog).
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
 
 
 @lru_cache

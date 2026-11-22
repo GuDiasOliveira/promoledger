@@ -101,7 +101,7 @@ This PRD proposes a software application to address these promotion frictions by
 ## User flows
 
 1. **Field Seller Flow (Order to Handover):**
-   - **Phase 1 (Sales Window):** Collect customer demand → Capture order (online or offline) → Collect informal payment (cash / transfer) and mark `paid_at` → Local queue syncs with backend.
+   - **Phase 1 (Sales Window):** Collect customer demand → Capture order (online or offline) → Collect informal payment (cash, bank transfer or instant payment) and mark `paid_at` → Local queue syncs with backend.
    - **Phase 2 (Delivery Day):** Retrieve customer pending deliveries → Hand over physical items → Mark `delivered_at` (triggers `ORDER_AUDIT_EVENT`).
 
 2. **Promotion Admin Flow (Setup to Final Settlement):**
@@ -127,3 +127,27 @@ This PRD proposes a software application to address these promotion frictions by
 - Automated hard quota limits per seller with real-time stock reservation locks.
 - Mobile-native applications for mobile module interface (Flutter, Dart).
 - Customers’ addresses, then plan a GPS route map for the user (Travelling Salesman Problem algorithm) to deliver each client’s orders.
+
+## Target Markets & Localization (MVP)
+
+- **Markets:** Brazil, the United States and Europe.
+- **UI languages:** `en-US` (default), `pt-BR`, `es-ES`. Numbers, dates and amounts are formatted with the viewer's locale and time zone; the API stays locale-neutral (UTC timestamps, ISO dates, decimal strings).
+- **Currencies:** one ISO 4217 currency per promotion, from a 2-decimal allowlist (`BRL`, `USD`, `EUR`, `GBP`, `CHF`, `SEK`, `NOK`, `DKK`, `PLN`, `CZK`).
+- **Payment-method neutral:** the product records *that* an order was paid (`paid_at`), never *how*; the UI must not assume region-specific methods (e.g. Pix).
+
+## Post-MVP Backlog
+
+### Product & Global Reach
+
+- More currencies, including 0- and 3-decimal ones (e.g. JPY, KWD) — requires a per-currency scale instead of fixed `NUMERIC(10, 2)`.
+- More UI languages (`de-DE`, `fr-FR`, `it-IT`, `es-419`, …) and right-to-left (RTL) language support.
+- Optional `payment_method` per order (cash, bank transfer, Pix, card, …), configurable per region.
+- Country-aware phone validation (E.164) for `CUSTOMER.contact`.
+- Per-promotion time zone, so sales-window boundaries are evaluated in the organizer's local time.
+
+### Technical
+
+- Refresh tokens with rotation and revocation (MVP uses 7-day access tokens; on `401` the offline queue pauses until re-login).
+- `If-Match` header support on transition endpoints (MVP accepts `expected_version` in the body only).
+- Replace the audit append-only trigger with database grants (`REVOKE UPDATE, DELETE`) and a separate migration role.
+- Native-speaker review of the `es-ES` (and `pt-BR`) translations before public launch.

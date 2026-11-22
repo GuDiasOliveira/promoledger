@@ -1,0 +1,54 @@
+import { describe, expect, it } from "vitest";
+
+import { defaultLocale, locales, matchLocale, messages } from "./config";
+
+function keyPaths(value: unknown, prefix = ""): string[] {
+  if (typeof value !== "object" || value === null) return [prefix];
+  return Object.entries(value).flatMap(([key, child]) =>
+    keyPaths(child, prefix ? `${prefix}.${key}` : key),
+  );
+}
+
+function placeholders(text: string): string[] {
+  return [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+}
+
+describe("message catalogs", () => {
+  const reference = keyPaths(messages[defaultLocale]).sort();
+
+  it.each(locales)("%s has exactly the same keys as en-US", (locale) => {
+    expect(keyPaths(messages[locale]).sort()).toEqual(reference);
+  });
+
+  it.each(locales)("%s has no empty translations", (locale) => {
+    const flat = keyPaths(messages[locale]).map((path) =>
+      path.split(".").reduce<unknown>((node, key) => (node as Record<string, unknown>)[key], messages[locale]),
+    );
+    expect(flat.every((text) => typeof text === "string" && text.trim().length > 0)).toBe(true);
+  });
+
+  it.each(locales)("%s keeps the same {placeholders} as en-US", (locale) => {
+    for (const path of reference) {
+      const get = (catalog: unknown) =>
+        path.split(".").reduce<unknown>((node, key) => (node as Record<string, unknown>)[key], catalog) as string;
+      expect(placeholders(get(messages[locale])), `${locale}:${path}`).toEqual(
+        placeholders(get(messages[defaultLocale])),
+      );
+    }
+  });
+});
+
+describe("matchLocale", () => {
+  it.each([
+    [["pt-BR"], "pt-BR"],
+    [["pt-PT"], "pt-BR"], // same language
+    [["es"], "es-ES"],
+    [["es-MX", "en"], "es-ES"],
+    [["en-GB"], "en-US"],
+    [["de-DE", "fr-FR"], "en-US"], // unsupported -> default
+    [["de-DE", "pt"], "pt-BR"], // first supported preference wins
+    [[], "en-US"],
+  ])("%j -> %s", (preferred, expected) => {
+    expect(matchLocale(preferred)).toBe(expected);
+  });
+});

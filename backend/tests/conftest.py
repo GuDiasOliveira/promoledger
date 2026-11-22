@@ -128,6 +128,8 @@ PROMOTION_DATES = {
     "last_sales_date": "2026-03-25",
     "delivery_date": "2026-03-30",
 }
+# Base fields for creating a promotion (dates + currency).
+PROMOTION_BASE = {**PROMOTION_DATES, "currency": "BRL"}
 
 
 @pytest.fixture
@@ -146,7 +148,7 @@ def promotion_factory(db_session: AsyncSession, institution: Institution) -> Pro
     """Creates a promotion through the real service (lead link + creator as admin)."""
 
     async def _create(*, creator: User, name: str = "Easter Drive 2026") -> Promotion:
-        data = PromotionCreate(name=name, institution_id=institution.id, **PROMOTION_DATES)
+        data = PromotionCreate(name=name, institution_id=institution.id, **PROMOTION_BASE)
         return await create_promotion(db_session, data, creator)
 
     return _create

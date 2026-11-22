@@ -6,14 +6,25 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Institution, Promotion, PromotionInstitution, PromotionMember, User
+from app.models import (
+    Customer,
+    Institution,
+    Product,
+    Promotion,
+    PromotionInstitution,
+    PromotionMember,
+    User,
+)
 from app.models.enums import Role
 from tests.conftest import (
+    PROMOTION_BASE,
     PROMOTION_DATES,
     MemberFactory,
     PromotionFactory,
     UserFactory,
     bearer,
+    order_payload,
+    place_order,
 )
 
 URL = "/api/v1/promotions"
@@ -25,7 +36,7 @@ URL = "/api/v1/promotions"
 async def test_create_promotion_links_lead_institution_and_creator_admin(
     client: AsyncClient, db_session: AsyncSession, institution: Institution, user: User
 ) -> None:
-    payload = {"name": "Easter Drive", "institution_id": str(institution.id), **PROMOTION_DATES}
+    payload = {"name": "Easter Drive", "institution_id": str(institution.id), **PROMOTION_BASE}
 
     response = await client.post(URL, json=payload, headers=bearer(user))
 
@@ -51,7 +62,7 @@ async def test_create_promotion_links_lead_institution_and_creator_admin(
 async def test_create_promotion_unknown_institution(
     client: AsyncClient, auth_headers: dict[str, str]
 ) -> None:
-    payload = {"name": "X", "institution_id": str(uuid.uuid4()), **PROMOTION_DATES}
+    payload = {"name": "X", "institution_id": str(uuid.uuid4()), **PROMOTION_BASE}
 
     response = await client.post(URL, json=payload, headers=auth_headers)
 
@@ -72,7 +83,7 @@ async def test_create_promotion_invalid_date_range(
     auth_headers: dict[str, str],
     dates: dict[str, str],
 ) -> None:
-    payload = {"name": "X", "institution_id": str(institution.id), **PROMOTION_DATES, **dates}
+    payload = {"name": "X", "institution_id": str(institution.id), **PROMOTION_BASE, **dates}
 
     response = await client.post(URL, json=payload, headers=auth_headers)
 
@@ -267,3 +278,78 @@ async def test_update_rejects_unknown_status(
     )
 
     assert response.status_code == 422
+
+
+# --- currency -------------------------------------------------------------------------------
+
+
+async def test_create_promotion_returns_currency(
+    client: AsyncClient, institution: Institution, auth_headers: dict[str, str]
+) -> None:
+    payload = {"name": "X", "institution_id": str(institution.id), **PROMOTION_BASE}
+
+    response = await client.post(URL, json={**payload, "currency": "EUR"}, headers=auth_headers)
+
+    assert response.status_code == 201
+    assert response.json()["currency"] == "EUR"
+
+
+@pytest.mark.parametrize("currency", [None, "JPY", "KWD", "brl", "XXX"])
+async def test_create_promotion_requires_supported_currency(
+    client: AsyncClient,
+    institution: Institution,
+    auth_headers: dict[str, str],
+    currency: str | None,
+) -> None:
+    payload = {"name": "X", "institution_id": str(institution.id), **PROMOTION_DATES}
+    if currency is not None:
+        payload["currency"] = currency
+
+    response = await client.post(URL, json=payload, headers=auth_headers)
+
+    assert response.status_code == 422
+
+
+async def test_currency_can_change_before_first_order(
+    client: AsyncClient, promotion: Promotion, user: User
+) -> None:
+    response = await client.patch(
+        f"{URL}/{promotion.id}", json={"currency": "USD"}, headers=bearer(user)
+    )
+
+    assert response.status_code == 200
+    assert response.json()["currency"] == "USD"
+
+
+async def test_currency_is_locked_once_orders_exist(
+    client: AsyncClient,
+    active_promotion: Promotion,
+    seller: PromotionMember,
+    user: User,
+    customer: Customer,
+    product: Product,
+) -> None:
+    created = await place_order(
+        client, active_promotion, seller, order_payload(customer, (product, 1))
+    )
+    assert created.status_code == 201
+
+    changed = await client.patch(
+        f"{URL}/{active_promotion.id}", json={"currency": "USD"}, headers=bearer(user)
+    )
+    unchanged = await client.patch(
+        f"{URL}/{active_promotion.id}", json={"currency": "BRL"}, headers=bearer(user)
+    )
+
+    assert changed.status_code == 400
+    assert changed.json()["code"] == "CURRENCY_LOCKED"
+    assert unchanged.status_code == 200  # same value is a no-op
+
+
+async def test_db_rejects_unsupported_currency(
+    db_session: AsyncSession, promotion: Promotion
+) -> None:
+    promotion.currency = "JPY"
+
+    with pytest.raises(IntegrityError, match="ck_promotion_currency_supported"):
+        await db_session.flush()

@@ -1,0 +1,57 @@
+{
+  "common": {
+    "appName": "PromoLedger",
+    "tagline": "Ventas de campañas, conciliadas.",
+    "loading": "Cargando…",
+    "logout": "Cerrar sesión",
+    "language": "Idioma",
+    "back": "Volver"
+  },
+  "auth": {
+    "loginTitle": "Iniciar sesión",
+    "registerTitle": "Crea tu cuenta",
+    "name": "Nombre completo",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "passwordHint": "Mínimo 8 caracteres.",
+    "submitLogin": "Iniciar sesión",
+    "submitRegister": "Crear cuenta",
+    "noAccount": "¿Eres nuevo?",
+    "goRegister": "Crea una cuenta",
+    "haveAccount": "¿Ya tienes una cuenta?",
+    "goLogin": "Inicia sesión"
+  },
+  "promotions": {
+    "title": "Tus promociones",
+    "empty": "Todavía no participas en ninguna promoción. Pide a un administrador de la promoción que te añada con tu correo electrónico.",
+    "status": {
+      "DRAFT": "Borrador",
+      "ACTIVE": "Activa",
+      "CLOSED": "Cerrada"
+    },
+    "roles": {
+      "seller": "Vendedor",
+      "promotion_admin": "Administrador",
+      "promotion_viewer": "Observador"
+    }
+  },
+  "promotion": {
+    "salesWindow": "Periodo de ventas",
+    "deliveryDate": "Fecha de entrega",
+    "currency": "Moneda",
+    "yourRoles": "Tus roles",
+    "range": "{start} – {end}"
+  },
+  "errors": {
+    "generic": "Algo salió mal. Inténtalo de nuevo.",
+    "network": "Parece que no tienes conexión. Comprueba tu conexión e inténtalo de nuevo.",
+    "codes": {
+      "INVALID_CREDENTIALS": "Correo electrónico o contraseña incorrectos.",
+      "EMAIL_ALREADY_REGISTERED": "Ya existe una cuenta con este correo electrónico.",
+      "VALIDATION_ERROR": "Revisa la información resaltada.",
+      "TOKEN_EXPIRED": "Tu sesión ha caducado. Inicia sesión de nuevo.",
+      "NOT_AUTHENTICATED": "Inicia sesión para continuar.",
+      "PROMOTION_NOT_FOUND": "Promoción no encontrada."
+    }
+  }
+}

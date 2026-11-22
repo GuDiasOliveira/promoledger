@@ -40,6 +40,7 @@ erDiagram
         date sales_start_date
         date last_sales_date
         date delivery_date
+        char currency "ISO 4217, 2-decimal allowlist"
         timestamptz created_at
         timestamptz updated_at
     }
@@ -153,9 +154,12 @@ A specific fundraising campaign with a defined timeline and batch delivery date.
 | `sales_start_date` | `DATE`         | NOT NULL                                                              | Date when sellers can begin collecting orders.        |
 | `last_sales_date`  | `DATE`         | NOT NULL, CHECK (`last_sales_date >= sales_start_date`)               | Final cutoff date for order capture.                  |
 | `delivery_date`    | `DATE`         | NOT NULL, CHECK (`delivery_date >= last_sales_date`)                  | Scheduled centralized batch fulfillment day.          |
+| `currency`         | `CHAR(3)`      | NOT NULL, CHECK in `('BRL','USD','EUR','GBP','CHF','SEK','NOK','DKK','PLN','CZK')` | ISO 4217 currency of every amount in the promotion (prices, orders, reconciliation). Immutable once the promotion has orders. |
 | `created_at`       | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                                             | Record creation timestamp.                            |
 | `updated_at`       | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                                             | Last modification timestamp.                          |
 
+> **Currency:** the MVP supports only ISO 4217 currencies with exactly 2 minor units (fits `NUMERIC(10, 2)`), covering Brazil, the US and Europe. The value is chosen at creation and locked once any order exists (`400 CURRENCY_LOCKED`).
+>
 > **Status transitions:** `DRAFT → ACTIVE`, `ACTIVE → CLOSED`, `CLOSED → ACTIVE` (reopen). Returning to `DRAFT` is not allowed. Setting the current status again is a no-op.
 
 ---
@@ -239,7 +243,7 @@ Buyer registered within a campaign context.
 | `id`           | `UUID`         | PK, default `gen_random_uuid()`                   | Customer identifier.              |
 | `promotion_id` | `UUID`         | NOT NULL, FK -> `PROMOTION(id)` ON DELETE CASCADE | Context campaign.                 |
 | `name`         | `VARCHAR(255)` | NOT NULL, CHECK (`char_length(trim(name)) > 0`)   | Customer full name.               |
-| `contact`      | `VARCHAR(255)` | NULL                                              | Optional phone/WhatsApp or email. |
+| `contact`      | `VARCHAR(255)` | NULL                                              | Optional phone (any messaging app) or email. |
 | `created_at`   | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                         | Creation timestamp.               |
 
 > **Offline creation:** `id` may be supplied by the client as a UUIDv4, so an offline-captured customer can be referenced by a queued order before either is synced. Re-sending the same `id` with the same data is an idempotent no-op.
@@ -261,7 +265,7 @@ Core transactional ledger entity tracking a customer purchase mediated by a fiel
 | `idempotency_key`  | `VARCHAR(64)` | NOT NULL, UNIQUE                                          | Client-generated UUIDv4 preventing duplicate network submissions. |
 | `idempotency_fingerprint` | `CHAR(64)` | NOT NULL                                     | SHA-256 of the canonical create payload (promotion, seller, customer, sorted items, `mark_paid_now`). Distinguishes a safe retry from a key reused with a different payload. |
 | `version`          | `INTEGER`     | NOT NULL, default `1`                                     | Incremental counter for Optimistic Concurrency Control (OCC).     |
-| `paid_at`          | `TIMESTAMPTZ` | NULL                                                      | Timestamp of manual cash/pix payment confirmation.                |
+| `paid_at`          | `TIMESTAMPTZ` | NULL                                                      | Timestamp of manual payment confirmation (cash, bank transfer or instant payment). |
 | `delivered_at`     | `TIMESTAMPTZ` | NULL                                                      | Timestamp of physical handover of goods.                          |
 | `cancelled_at`     | `TIMESTAMPTZ` | NULL                                                      | Timestamp if order was voided prior to fulfillment.               |
 | `created_at`       | `TIMESTAMPTZ` | NOT NULL, default `NOW()`                                 | Order placement timestamp.                                        |

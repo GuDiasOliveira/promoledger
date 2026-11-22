@@ -18,6 +18,8 @@ This document specifies the RESTful API design conventions, HTTP status codes, h
 - **Strict Rule:** Currency values MUST be serialized as exact decimal strings (e.g., `"19.90"`) or integer cents (e.g., `1990`). Floating-point numbers are prohibited in requests and responses.
 - **Implementation:** PromoLedger uses decimal strings. Request money fields MUST be JSON strings matching `^\d{1,8}(\.\d{1,2})?$` (e.g. `"19.9"` or `"19.90"`); JSON numbers are rejected with `422`. Responses always use exactly two decimal places (`"19.90"`).
 
+- **Currency:** every amount belongs to its promotion's `currency` (ISO 4217, returned on the promotion resource). Amounts carry no currency symbol; clients format them with the promotion currency and the viewer's locale.
+
 ### 1.3 Standard Headers
 
 | Header            | Type     | Description                                                                                          | Mandatory On                                                                               |
@@ -157,7 +159,8 @@ All campaign sub-resources are scoped under `/promotions/{promotion_id}` to guar
   "institution_id": "7f8b9a10-2c3d-4e5f-6a7b-8c9d0e1f2a3b",
   "sales_start_date": "2026-03-01",
   "last_sales_date": "2026-03-25",
-  "delivery_date": "2026-03-30"
+  "delivery_date": "2026-03-30",
+  "currency": "BRL"
 }
 ```
 
@@ -172,7 +175,7 @@ All campaign sub-resources are scoped under `/promotions/{promotion_id}` to guar
 
 ### Promotion Update (`PATCH /api/v1/promotions/{id}`)
 
-All fields optional: `name`, `sales_start_date`, `last_sales_date`, `delivery_date`, `status`. Dates are validated against the merged (current + new) values. Allowed status transitions: `DRAFT → ACTIVE`, `ACTIVE → CLOSED`, `CLOSED → ACTIVE`.
+All fields optional: `name`, `sales_start_date`, `last_sales_date`, `delivery_date`, `status`, `currency`. Dates are validated against the merged (current + new) values. Allowed status transitions: `DRAFT → ACTIVE`, `ACTIVE → CLOSED`, `CLOSED → ACTIVE`.
 
 ### Membership Payloads
 
@@ -196,6 +199,7 @@ All fields optional: `name`, `sales_start_date`, `last_sales_date`, `delivery_da
 | :----- | :-------------------------- | :--------------------------------------------------------------------------------------- |
 | `400`  | `INVALID_DATE_RANGE`        | Not `sales_start_date <= last_sales_date <= delivery_date`.                              |
 | `400`  | `INVALID_STATUS_TRANSITION` | Status change outside the allowed transitions.                                           |
+| `400`  | `CURRENCY_LOCKED`           | `PATCH` changes `currency` after the promotion has orders.                               |
 | `403`  | `INSUFFICIENT_ROLE`         | Active member without a required role.                                                   |
 | `404`  | `INSTITUTION_NOT_FOUND`     | Unknown institution id (path or `institution_id` in body).                               |
 | `404`  | `PROMOTION_NOT_FOUND`       | Unknown promotion, or caller is not an active member.                                    |

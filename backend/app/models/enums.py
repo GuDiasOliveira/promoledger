@@ -8,6 +8,25 @@ class PromotionStatus(StrEnum):
     CLOSED = "CLOSED"
 
 
+class Currency(StrEnum):
+    """MVP allowlist: ISO 4217 codes with exactly 2 minor units (fits NUMERIC(10, 2)).
+
+    Covers Brazil, the US and Europe. Other currencies (incl. 0/3-decimal ones such as
+    JPY/KWD) are in the post-MVP backlog (docs/prd.md).
+    """
+
+    BRL = "BRL"
+    USD = "USD"
+    EUR = "EUR"
+    GBP = "GBP"
+    CHF = "CHF"
+    SEK = "SEK"
+    NOK = "NOK"
+    DKK = "DKK"
+    PLN = "PLN"
+    CZK = "CZK"
+
+
 class Role(StrEnum):
     SELLER = "seller"
     PROMOTION_ADMIN = "promotion_admin"

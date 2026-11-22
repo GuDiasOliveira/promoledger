@@ -63,6 +63,19 @@ docker-compose.yml      # Local dev services (PostgreSQL 16)
 - **Framework & UI:** Next.js (App Router), TypeScript, Tailwind CSS.
 - **Offline Storage & Queue:** `Dexie.js` for IndexedDB mutations and local order caching.
 - **Server State & Cache:** `@tanstack/react-query` v5 for caching and retry/reconnection sync.
+- **Package Manager:** `npm` (run from `/frontend`). Next.js **16** with Cache Components: read `frontend/AGENTS.md` and the bundled docs in `frontend/node_modules/next/dist/docs/` before using Next.js APIs.
+- **API Access:** the browser only calls the Next.js origin; `next.config.ts` rewrites `/api/v1/*` to `BACKEND_URL` (default `http://localhost:8000`). No CORS.
+- **API Contract:** types are generated from the FastAPI OpenAPI schema — never hand-write request/response types. Re-run `npm run gen:api` after any backend contract change.
+- **i18n:** `next-intl`, locales `en-US` (default), `pt-BR`, `es-ES`; all UI text goes through `messages/*.json` (key parity is tested). Format numbers/dates/money with `Intl` in the viewer's locale; never assume a region-specific payment method in UI copy.
+- **Money:** never `Number`/`parseFloat` for amounts — use `lib/money.ts` (`bigint` cents, exact decimal strings to `Intl`).
+- **Known Trap — `<Activity>` route preservation:** Cache Components keeps up to 3 visited routes mounted but hidden, *with their state*. Wipe sensitive/transient state in a `useLayoutEffect` cleanup (see `components/auth-form.tsx`), and scope E2E locators to visible elements.
+
+### Frontend Verification Commands
+
+- **Install:** `npm install` (Playwright browser: `npx playwright install chromium`)
+- **Dev server:** `npm run dev` (backend must be running on `:8000`)
+- **Regenerate API types:** `npm run gen:api`
+- **Lint / Types / Unit tests / Build:** `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`
 
 ## 5. MVP Execution Roadmap (Vertical Slices)
 

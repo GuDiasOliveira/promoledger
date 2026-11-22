@@ -2,6 +2,7 @@ import uuid
 from datetime import date, datetime
 
 from sqlalchemy import (
+    CHAR,
     CheckConstraint,
     Date,
     DateTime,
@@ -16,7 +17,7 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.models.enums import PromotionStatus, Role, sql_in_list
+from app.models.enums import Currency, PromotionStatus, Role, sql_in_list
 from app.models.institution import Institution
 from app.models.mixins import CreatedAtMixin, TimestampMixin, UUIDPrimaryKeyMixin
 from app.models.user import User
@@ -34,6 +35,7 @@ class Promotion(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         CheckConstraint(f"status IN ({sql_in_list(PromotionStatus)})", name="status_valid"),
         CheckConstraint("last_sales_date >= sales_start_date", name="sales_window_valid"),
         CheckConstraint("delivery_date >= last_sales_date", name="delivery_after_sales"),
+        CheckConstraint(f"currency IN ({sql_in_list(Currency)})", name="currency_supported"),
     )
 
     name: Mapped[str] = mapped_column(String(255))
@@ -43,6 +45,8 @@ class Promotion(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     sales_start_date: Mapped[date] = mapped_column(Date)
     last_sales_date: Mapped[date] = mapped_column(Date)
     delivery_date: Mapped[date] = mapped_column(Date)
+    # ISO 4217; immutable once the promotion has orders (all amounts are in this currency).
+    currency: Mapped[str] = mapped_column(CHAR(3))
 
 
 class PromotionInstitution(CreatedAtMixin, Base):
