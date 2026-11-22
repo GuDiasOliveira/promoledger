@@ -85,7 +85,7 @@ Standard Status Codes:
 | :----- | :---------------------- | :------------ | :--------------------------------------------------------------------------------------- |
 | `POST` | `/api/v1/auth/register` | Public        | Register a new user account (`name`, `email`, `password`). Returns created user profile. |
 | `POST` | `/api/v1/auth/token`    | Public        | Authenticate user via email/credentials; returns JWT access token.                       |
-| `GET`  | `/api/v1/auth/me`       | Authenticated | Retrieve current user profile and list of active `PromotionMember` campaigns.            |
+| `GET`  | `/api/v1/auth/me`       | Authenticated | Retrieve current user profile and list of active `PromotionMember` campaigns (`memberships[]`: `member_id`, `promotion_id`, `promotion_name`, `promotion_status`, `roles`). |
 
 ### Auth Error Codes
 
@@ -161,6 +161,47 @@ All campaign sub-resources are scoped under `/promotions/{promotion_id}` to guar
 ```
 
 > **Creation Guarantees:** Upon creation, the creator user is automatically registered in `PROMOTION_MEMBER` with `roles = ['promotion_admin']`, and the designated `institution_id` is linked in `PROMOTION_INSTITUTION` with `is_lead = true`.
+
+### Contextual RBAC Semantics
+
+- Access is checked per request against the caller's **active** `PROMOTION_MEMBER` row (`revoked_at IS NULL`).
+- Caller is not an active member of the promotion → `404 PROMOTION_NOT_FOUND` (existence is not disclosed).
+- Caller is a member but lacks every accepted role → `403 INSUFFICIENT_ROLE`.
+- `GET /institutions/{id}` lists only the associated promotions the caller is an active member of.
+
+### Promotion Update (`PATCH /api/v1/promotions/{id}`)
+
+All fields optional: `name`, `sales_start_date`, `last_sales_date`, `delivery_date`, `status`. Dates are validated against the merged (current + new) values. Allowed status transitions: `DRAFT → ACTIVE`, `ACTIVE → CLOSED`, `CLOSED → ACTIVE`.
+
+### Membership Payloads
+
+`POST /api/v1/promotions/{id}/members` — the user must already have an account (no email invitations in the MVP). Re-adding a previously revoked member reactivates the same membership row with the new roles.
+
+```json
+{ "email": "seller@example.com", "roles": ["seller"] }
+```
+
+`PATCH /api/v1/promotions/{id}/members/{member_id}` — at least one field:
+
+```json
+{ "roles": ["seller", "promotion_viewer"], "revoked": true }
+```
+
+`revoked: true` soft-revokes (sets `revoked_at`); `revoked: false` reinstates. `GET .../members` returns active members only; pass `?include_revoked=true` to include revoked ones.
+
+### Tenants & Membership Error Codes
+
+| Status | `code`                      | When                                                                                     |
+| :----- | :-------------------------- | :--------------------------------------------------------------------------------------- |
+| `400`  | `INVALID_DATE_RANGE`        | Not `sales_start_date <= last_sales_date <= delivery_date`.                              |
+| `400`  | `INVALID_STATUS_TRANSITION` | Status change outside the allowed transitions.                                           |
+| `403`  | `INSUFFICIENT_ROLE`         | Active member without a required role.                                                   |
+| `404`  | `INSTITUTION_NOT_FOUND`     | Unknown institution id (path or `institution_id` in body).                               |
+| `404`  | `PROMOTION_NOT_FOUND`       | Unknown promotion, or caller is not an active member.                                    |
+| `404`  | `USER_NOT_FOUND`            | `POST .../members` with an email that has no account.                                    |
+| `404`  | `MEMBER_NOT_FOUND`          | `member_id` does not belong to this promotion.                                           |
+| `409`  | `ALREADY_MEMBER`            | `POST .../members` for a user who is already an active member.                           |
+| `409`  | `LAST_ADMIN`                | Change would leave the promotion with no active `promotion_admin`.                       |
 
 ---
 

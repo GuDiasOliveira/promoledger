@@ -24,7 +24,10 @@ from sqlalchemy.ext.asyncio import (
 from app.core.database import get_db_session
 from app.core.security import create_access_token, hash_password
 from app.main import create_app
-from app.models.user import User
+from app.models import Institution, Promotion, PromotionMember, User
+from app.models.enums import Role
+from app.schemas.promotion import PromotionCreate
+from app.services.promotions import create_promotion
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL") or os.environ.get("DATABASE_URL")
@@ -110,4 +113,65 @@ async def user(user_factory: UserFactory) -> User:
 
 @pytest.fixture
 def auth_headers(user: User) -> dict[str, str]:
+    return bearer(user)
+
+
+def bearer(user: User) -> dict[str, str]:
     return {"Authorization": f"Bearer {create_access_token(user.id)}"}
+
+
+PROMOTION_DATES = {
+    "sales_start_date": "2026-03-01",
+    "last_sales_date": "2026-03-25",
+    "delivery_date": "2026-03-30",
+}
+
+
+@pytest.fixture
+async def institution(db_session: AsyncSession) -> Institution:
+    institution = Institution(name="Colégio Exemplo")
+    db_session.add(institution)
+    await db_session.flush()
+    return institution
+
+
+PromotionFactory = Callable[..., Awaitable[Promotion]]
+
+
+@pytest.fixture
+def promotion_factory(db_session: AsyncSession, institution: Institution) -> PromotionFactory:
+    """Creates a promotion through the real service (lead link + creator as admin)."""
+
+    async def _create(*, creator: User, name: str = "Easter Drive 2026") -> Promotion:
+        data = PromotionCreate(name=name, institution_id=institution.id, **PROMOTION_DATES)
+        return await create_promotion(db_session, data, creator)
+
+    return _create
+
+
+@pytest.fixture
+async def promotion(promotion_factory: PromotionFactory, user: User) -> Promotion:
+    """A promotion whose admin is the default `user` fixture."""
+    return await promotion_factory(creator=user)
+
+
+MemberFactory = Callable[..., Awaitable[PromotionMember]]
+
+
+@pytest.fixture
+def member_factory(db_session: AsyncSession, user_factory: UserFactory) -> MemberFactory:
+    async def _create(
+        promotion: Promotion, *roles: Role, user: User | None = None
+    ) -> PromotionMember:
+        member_user = user or await user_factory()
+        member = PromotionMember(
+            promotion_id=promotion.id,
+            user_id=member_user.id,
+            roles=list(roles or (Role.SELLER,)),
+        )
+        member.user = member_user
+        db_session.add(member)
+        await db_session.flush()
+        return member
+
+    return _create

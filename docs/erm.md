@@ -65,6 +65,7 @@ erDiagram
         uuid user_id FK
         uuid promotion_id FK
         text_array roles "non-empty: seller | promotion_admin | promotion_viewer"
+        timestamptz revoked_at "nullable, soft revocation"
         timestamptz created_at
     }
 
@@ -151,6 +152,8 @@ A specific fundraising campaign with a defined timeline and batch delivery date.
 | `created_at`       | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                                             | Record creation timestamp.                            |
 | `updated_at`       | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                                             | Last modification timestamp.                          |
 
+> **Status transitions:** `DRAFT → ACTIVE`, `ACTIVE → CLOSED`, `CLOSED → ACTIVE` (reopen). Returning to `DRAFT` is not allowed. Setting the current status again is a no-op.
+
 ---
 
 ### 2.3 `PROMOTION_INSTITUTION`
@@ -194,10 +197,15 @@ Contextual RBAC membership entity linking a user to a specific promotion.
 | `id`           | `UUID`        | PK, default `gen_random_uuid()`                   | Membership identifier.                                                     |
 | `user_id`      | `UUID`        | NOT NULL, FK -> `USER(id)` ON DELETE CASCADE      | Associated user.                                                           |
 | `promotion_id` | `UUID`        | NOT NULL, FK -> `PROMOTION(id)` ON DELETE CASCADE | Contextual campaign.                                                       |
-| `roles`        | `TEXT[]`      | NOT NULL, CHECK (`array_length(roles, 1) > 0`)    | Non-empty array of roles: `seller`, `promotion_admin`, `promotion_viewer`. |
+| `roles`        | `TEXT[]`      | NOT NULL, CHECK (`cardinality(roles) > 0`), CHECK (`roles <@ ARRAY['seller','promotion_admin','promotion_viewer']`) | Non-empty array of roles: `seller`, `promotion_admin`, `promotion_viewer`. |
+| `revoked_at`   | `TIMESTAMPTZ` | NULL                                              | Soft revocation timestamp. `NULL` = active membership.                     |
 | `created_at`   | `TIMESTAMPTZ` | NOT NULL, default `NOW()`                         | Membership assignment timestamp.                                           |
 
 > **Constraint:** `UNIQUE (user_id, promotion_id)` ensures a user cannot have duplicate memberships in the same campaign.
+>
+> **Non-empty check:** uses `cardinality()`, not `array_length(roles, 1)` — the latter returns `NULL` for `'{}'`, and a `NULL` CHECK result passes.
+>
+> **Soft revocation:** memberships are never deleted, because `ORDER.seller_member_id` and `ORDER_AUDIT_EVENT.actor_member_id` reference them (`ON DELETE RESTRICT`) and historical attribution must be preserved. An **active member** is one with `revoked_at IS NULL`; RBAC ignores revoked memberships. A promotion must always keep at least one active `promotion_admin`.
 
 ---
 

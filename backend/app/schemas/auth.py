@@ -2,12 +2,11 @@ import uuid
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field, StringConstraints
+from pydantic import BaseModel, ConfigDict, Field
 
-NonBlankName = Annotated[
-    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=255)
-]
-NormalizedEmail = Annotated[EmailStr, Field(max_length=255), AfterValidator(str.lower)]
+from app.models.enums import PromotionStatus, Role
+from app.schemas.common import NonBlankName, NormalizedEmail
+
 Password = Annotated[str, Field(min_length=8, max_length=128)]
 
 
@@ -38,11 +37,13 @@ class UserResponse(BaseModel):
 
 
 class PromotionMembershipSummary(BaseModel):
-    """Populated from PROMOTION_MEMBER starting in Slice 1.3."""
+    """One active PROMOTION_MEMBER row of the current user."""
 
     member_id: uuid.UUID
     promotion_id: uuid.UUID
-    roles: list[str]
+    promotion_name: str
+    promotion_status: PromotionStatus
+    roles: list[Role]
 
 
 class MeResponse(UserResponse):

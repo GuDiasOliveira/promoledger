@@ -5,6 +5,7 @@ from app.core.errors import AppError
 from app.core.security import create_access_token
 from app.schemas.auth import MeResponse, TokenRequest, TokenResponse, UserCreate, UserResponse
 from app.services import auth as auth_service
+from app.services import members as member_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -29,6 +30,8 @@ async def issue_token(payload: TokenRequest, session: DbSession) -> TokenRespons
 
 
 @router.get("/me", response_model=MeResponse)
-async def me(current_user: CurrentUser) -> MeResponse:
-    # Memberships are populated from PROMOTION_MEMBER in Slice 1.3.
-    return MeResponse.model_validate(current_user)
+async def me(current_user: CurrentUser, session: DbSession) -> MeResponse:
+    memberships = await member_service.list_user_memberships(session, current_user)
+    return MeResponse(
+        **UserResponse.model_validate(current_user).model_dump(), memberships=memberships
+    )

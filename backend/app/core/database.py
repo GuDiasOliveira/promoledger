@@ -18,6 +18,10 @@ NAMING_CONVENTION = {
 
 class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
+    # Inherited by every model: fetch server-generated values (ids, created_at, onupdate
+    # updated_at) via INSERT/UPDATE ... RETURNING instead of leaving them expired, which
+    # would trigger an implicit refresh (MissingGreenlet) in async code.
+    __mapper_args__ = {"eager_defaults": True}
 
 
 settings = get_settings()
