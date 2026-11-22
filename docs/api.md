@@ -71,6 +71,14 @@ Standard Status Codes:
 
 ---
 
+## 1.6 Operational Endpoints
+
+| Method | Endpoint         | Min Role | Description                                                                                                                  |
+| :----- | :--------------- | :------- | :--------------------------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/api/v1/health` | Public   | Liveness & database readiness probe (`SELECT 1`). Returns `200 {"status":"ok","database":"ok"}` or `503 {"status":"degraded","database":"unavailable"}`. |
+
+---
+
 ## 2. Authentication & User Profile (`/auth`)
 
 | Method | Endpoint                | Min Role      | Description                                                                              |
