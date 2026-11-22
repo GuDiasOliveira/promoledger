@@ -68,6 +68,12 @@ function PromotionHome({ userId, promotion: p }: PromotionScope) {
             <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("promotion.notActive")}</p>
           )}
           <Link
+            href={promotionHref("/orders", p.id)}
+            className="flex min-h-14 items-center justify-center rounded-xl border border-zinc-300 px-4 font-medium dark:border-zinc-700"
+          >
+            {t("promotion.myOrders")}
+          </Link>
+          <Link
             href={promotionHref("/sync", p.id)}
             className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-zinc-300 px-4 font-medium dark:border-zinc-700"
           >

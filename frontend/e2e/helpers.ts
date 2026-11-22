@@ -182,3 +182,74 @@ export async function fillOrderWithNewCustomer(page: Page, customerName: string)
   for (let i = 0; i < 2; i += 1) await page.getByRole("button", { name: "Add one Chocolate Egg" }).click();
   for (let i = 0; i < 3; i += 1) await page.getByRole("button", { name: "Add one Bonbon" }).click();
 }
+
+export interface ServerOrderDetail extends ServerOrder {
+  version: number;
+  paid_at: string | null;
+  delivered_at: string | null;
+  audit_events: { event_type: string; actor_member_id: string; reason: string | null }[];
+}
+
+/** Seller creates a customer + order through the API (as if captured earlier). */
+export async function createOrderAsSeller(
+  s: Scenario,
+  customerName: string,
+  { markPaidNow = false }: { markPaidNow?: boolean } = {},
+): Promise<string> {
+  const base = `/promotions/${s.promotionId}`;
+  const customer = await call<{ id: string }>(`${base}/customers`, {
+    token: s.seller.token,
+    method: "POST",
+    body: { name: customerName },
+  });
+  const products = await call<{ items: { id: string; name: string }[] }>(`${base}/products`, {
+    token: s.seller.token,
+  });
+  const egg = products.items.find((p) => p.name === "Chocolate Egg")!;
+  const res = await fetch(`${API_URL}${base}/orders`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${s.seller.token}`,
+      "idempotency-key": crypto.randomUUID(),
+    },
+    body: JSON.stringify({
+      customer_id: customer.id,
+      items: [{ product_id: egg.id, quantity: 1 }],
+      mark_paid_now: markPaidNow,
+    }),
+  });
+  if (!res.ok) throw new Error(`create order -> ${res.status}: ${await res.text()}`);
+  return ((await res.json()) as { id: string }).id;
+}
+
+/** The "someone else": an admin changing the order through the API meanwhile. */
+export async function adminTransition(
+  s: Scenario,
+  orderId: string,
+  path: "payment" | "delivery" | "cancel",
+  body: Record<string, unknown>,
+): Promise<ServerOrderDetail> {
+  const res = await fetch(`${API_URL}/promotions/${s.promotionId}/orders/${orderId}/${path}`, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${s.admin.token}`,
+      "idempotency-key": crypto.randomUUID(),
+    },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error(`admin ${path} -> ${res.status}: ${await res.text()}`);
+  return (await res.json()) as ServerOrderDetail;
+}
+
+export async function serverOrder(s: Scenario, orderId: string): Promise<ServerOrderDetail> {
+  return call<ServerOrderDetail>(`/promotions/${s.promotionId}/orders/${orderId}`, { token: s.admin.token });
+}
+
+/** Open "My orders" and then the order of `customerName`. */
+export async function openOrder(page: Page, promotionId: string, customerName: string) {
+  await page.goto(`/promotion/orders?id=${promotionId}`);
+  await page.getByTestId("order-card").filter({ hasText: customerName }).click();
+  await expect(page.getByRole("heading", { name: `Order for ${customerName}` })).toBeVisible();
+}

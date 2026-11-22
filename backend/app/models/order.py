@@ -103,6 +103,11 @@ class OrderItem(UUIDPrimaryKeyMixin, Base):
     def line_total(self) -> Decimal:
         return self.unit_price * self.quantity
 
+    @property
+    def product_name(self) -> str:
+        """Current catalog name (requires `product` eager-loaded). Prices stay snapshotted."""
+        return self.product.name
+
 
 class OrderAuditEvent(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     """ERM §2.10 `ORDER_AUDIT_EVENT`. Append-only (enforced by a DB trigger)."""

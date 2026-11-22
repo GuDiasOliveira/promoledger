@@ -55,4 +55,9 @@ export function WithPromotion({ children }: { children: (scope: PromotionScope) 
   );
 }
 
-export const promotionHref = (path: "" | "/sell" | "/sync", id: string) => `/promotion${path}?id=${id}`;
+export const promotionHref = (path: "" | "/sell" | "/sync" | "/orders", id: string) =>
+  `/promotion${path}?id=${id}`;
+
+/** Order detail: `order` is the local ref (works for orders not yet sent). */
+export const orderHref = (promotionId: string, ref: string) =>
+  `/promotion/order?id=${promotionId}&order=${encodeURIComponent(ref)}`;

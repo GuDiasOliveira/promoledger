@@ -11,4 +11,6 @@ export const APP_SHELL = [
   "/promotion",
   "/promotion/sell",
   "/promotion/sync",
+  "/promotion/orders",
+  "/promotion/order",
 ] as const;

@@ -785,6 +785,8 @@ export interface components {
              * Format: uuid
              */
             product_id: string;
+            /** Product Name */
+            product_name: string;
             /** Quantity */
             quantity: number;
             /**

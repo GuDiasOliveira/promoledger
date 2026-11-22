@@ -8,7 +8,8 @@
  *   an earlier customer).
  * - Network error / 5xx / 429 -> stop the run, schedule a retry with exponential backoff.
  * - 401 -> stop everything until the user logs in again (items stay pending).
- * - 409 -> item becomes "conflict"; other 4xx -> "failed"; in both cases the run continues.
+ * - 409 -> item becomes "conflict"; other 4xx -> "failed"; the run continues, but every later
+ *   item depending on the rejected record (`deps`) is held, not sent (Slice 4.3 decision 1).
  * - The same Idempotency-Key is sent on every attempt (it is fixed in the outbox row).
  */
 import { ApiError, NetworkError } from "@/lib/api/errors";
@@ -61,6 +62,26 @@ export async function pendingItems(db: PromoLedgerDB, userId: string): Promise<O
   return rows.filter((row) => row.status === "pending");
 }
 
+/**
+ * Pending items that must NOT be sent because something they depend on (an earlier
+ * customer, order or action of the same order) was rejected or is itself held.
+ * Transitive: customer failed -> its order held -> that order's actions held.
+ * Shared by the engine and the UI, so both always agree on what is "on hold".
+ */
+export function blockedItems(queue: OutboxItem[]): Set<number> {
+  const stuck = new Set<string>();
+  const blocked = new Set<number>();
+  for (const item of [...queue].sort((a, b) => a.seq! - b.seq!)) {
+    if (item.status !== "pending") {
+      stuck.add(item.localRef);
+    } else if ((item.deps ?? []).some((dep) => stuck.has(dep))) {
+      blocked.add(item.seq!);
+      stuck.add(item.localRef);
+    }
+  }
+  return blocked;
+}
+
 export async function runSync({
   db,
   userId,
@@ -69,12 +90,20 @@ export async function runSync({
   random = Math.random,
   onRejected,
 }: SyncDeps): Promise<SyncReport> {
-  const queue = await pendingItems(db, userId);
-  if (queue.length === 0) return { outcome: "idle", sent: 0, failed: 0, nextRunAt: null };
+  const queue = await db.outbox.where("userId").equals(userId).sortBy("seq");
+  if (!queue.some((item) => item.status === "pending")) {
+    return { outcome: "idle", sent: 0, failed: 0, nextRunAt: null };
+  }
 
   let sent = 0;
   let failed = 0;
+  // Refs that cannot be relied upon in this run (rejected or held), see blockedItems().
+  const stuck = new Set<string>();
   for (const item of queue) {
+    if (item.status !== "pending" || (item.deps ?? []).some((dep) => stuck.has(dep))) {
+      stuck.add(item.localRef); // held items are skipped, never sent
+      continue;
+    }
     if (item.nextAttemptAt > now()) {
       return { outcome: "waiting", sent, failed, nextRunAt: item.nextAttemptAt };
     }
@@ -103,6 +132,7 @@ export async function runSync({
         attempts: item.attempts + 1,
         lastError: error.problem,
       });
+      stuck.add(item.localRef);
       await onRejected?.(item, status);
       failed += 1;
     }

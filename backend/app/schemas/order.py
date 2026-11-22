@@ -42,6 +42,8 @@ class OrderItemResponse(BaseModel):
 
     id: uuid.UUID
     product_id: uuid.UUID
+    # Display only (also for archived products, which offline catalogs no longer hold).
+    product_name: str
     quantity: int
     unit_price: MoneyOut
     line_total: MoneyOut

@@ -49,7 +49,8 @@
     "newOrder": "Novo pedido",
     "outbox": "Fila de envio",
     "notFound": "Esta promoção não está disponível neste aparelho.",
-    "notActive": "Só é possível registrar pedidos enquanto a promoção estiver ativa."
+    "notActive": "Só é possível registrar pedidos enquanto a promoção estiver ativa.",
+    "myOrders": "Meus pedidos"
   },
   "sell": {
     "title": "Novo pedido",
@@ -83,12 +84,15 @@
     },
     "kind": {
       "createCustomer": "Novo cliente: {name}",
-      "createOrder": "Pedido de {name}"
+      "createOrder": "Pedido de {name}",
+      "transition": "{action}: {name}"
     },
     "attempts": "{count, plural, one {# tentativa} other {# tentativas}}",
     "retryNow": "Tentar agora",
     "discard": "Descartar",
-    "confirmDiscard": "Descartar esta alteração? Ela não será enviada."
+    "confirmDiscard": "Descartar esta alteração? Ela não será enviada.",
+    "held": "Em espera até o item do qual depende ser resolvido",
+    "resolve": "Resolver"
   },
   "errors": {
     "generic": "Algo deu errado. Tente novamente.",
@@ -107,5 +111,67 @@
       "IDEMPOTENCY_KEY_REUSED": "Esta alteração conflita com outra já enviada.",
       "INSUFFICIENT_ROLE": "Você não tem permissão para fazer isso."
     }
+  },
+  "orders": {
+    "title": "Meus pedidos",
+    "search": "Buscar por cliente",
+    "empty": "Nenhum pedido aqui.",
+    "tabs": {
+      "all": "Todos",
+      "toDeliver": "A entregar",
+      "unpaid": "Não pagos",
+      "divergence": "Divergências",
+      "done": "Concluídos"
+    },
+    "classification": {
+      "UNPAID_PENDING": "Não pago",
+      "PAID_PENDING": "Pago · a entregar",
+      "DIVERGENCE": "Entregue · não pago",
+      "SETTLED": "Concluído",
+      "CANCELLED": "Cancelado"
+    },
+    "pendingSync": "Aguardando envio",
+    "needsAttention": "Requer atenção"
+  },
+  "order": {
+    "title": "Pedido de {name}",
+    "items": "Itens",
+    "total": "Total",
+    "estimate": "Total estimado",
+    "placedAt": "Feito em {date}",
+    "history": "Histórico",
+    "historyOffline": "O histórico aparece quando você estiver online.",
+    "actions": {
+      "MARK_PAID": "Marcar como pago",
+      "REVOKE_PAYMENT": "Estornar pagamento",
+      "MARK_DELIVERED": "Marcar como entregue",
+      "REVOKE_DELIVERY": "Estornar entrega",
+      "CANCEL": "Cancelar pedido"
+    },
+    "events": {
+      "PAYMENT_MARKED": "Pagamento recebido",
+      "PAYMENT_REVOKED": "Pagamento estornado",
+      "DELIVERY_MARKED": "Entregue",
+      "DELIVERY_REVOKED": "Entrega estornada",
+      "ORDER_CANCELLED": "Cancelado"
+    },
+    "reason": "Motivo (obrigatório)",
+    "confirm": "Confirmar",
+    "back": "Voltar",
+    "queued": "{count, plural, one {# ação aguardando envio} other {# ações aguardando envio}}",
+    "notFound": "Este pedido não está disponível neste aparelho."
+  },
+  "conflict": {
+    "title": "Outra pessoa alterou este pedido",
+    "explain": "Enquanto suas ações aguardavam envio, o pedido mudou no servidor. Suas ações não foram aplicadas.",
+    "server": "Agora no servidor",
+    "mine": "Suas ações",
+    "reapply": "Reaplicar minhas ações",
+    "discard": "Descartar minhas ações",
+    "nothingToApply": "Nada a aplicar: o pedido já está assim.",
+    "willSkip": "{count, plural, one {# ação não é mais possível e será ignorada.} other {# ações não são mais possíveis e serão ignoradas.}}",
+    "offline": "Conecte-se à internet para ver o estado atual e resolver.",
+    "rejected": "Uma ação foi recusada",
+    "ok": "Ok, entendi"
   }
 }

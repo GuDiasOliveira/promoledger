@@ -49,7 +49,8 @@
     "newOrder": "Nuevo pedido",
     "outbox": "Cola de envío",
     "notFound": "Esta promoción no está disponible en este dispositivo.",
-    "notActive": "Solo se pueden registrar pedidos mientras la promoción esté activa."
+    "notActive": "Solo se pueden registrar pedidos mientras la promoción esté activa.",
+    "myOrders": "Mis pedidos"
   },
   "sell": {
     "title": "Nuevo pedido",
@@ -83,12 +84,15 @@
     },
     "kind": {
       "createCustomer": "Nuevo cliente: {name}",
-      "createOrder": "Pedido de {name}"
+      "createOrder": "Pedido de {name}",
+      "transition": "{action}: {name}"
     },
     "attempts": "{count, plural, one {# intento} other {# intentos}}",
     "retryNow": "Reintentar ahora",
     "discard": "Descartar",
-    "confirmDiscard": "¿Descartar este cambio? No se enviará."
+    "confirmDiscard": "¿Descartar este cambio? No se enviará.",
+    "held": "En espera hasta que se resuelva el elemento del que depende",
+    "resolve": "Resolver"
   },
   "errors": {
     "generic": "Algo salió mal. Inténtalo de nuevo.",
@@ -107,5 +111,67 @@
       "IDEMPOTENCY_KEY_REUSED": "Este cambio entra en conflicto con otro ya enviado.",
       "INSUFFICIENT_ROLE": "No tienes permiso para hacer esto."
     }
+  },
+  "orders": {
+    "title": "Mis pedidos",
+    "search": "Buscar por cliente",
+    "empty": "No hay pedidos aquí.",
+    "tabs": {
+      "all": "Todos",
+      "toDeliver": "Por entregar",
+      "unpaid": "Sin pagar",
+      "divergence": "Divergencias",
+      "done": "Completados"
+    },
+    "classification": {
+      "UNPAID_PENDING": "Sin pagar",
+      "PAID_PENDING": "Pagado · por entregar",
+      "DIVERGENCE": "Entregado · sin pagar",
+      "SETTLED": "Completado",
+      "CANCELLED": "Cancelado"
+    },
+    "pendingSync": "Pendiente de envío",
+    "needsAttention": "Requiere atención"
+  },
+  "order": {
+    "title": "Pedido de {name}",
+    "items": "Artículos",
+    "total": "Total",
+    "estimate": "Total estimado",
+    "placedAt": "Realizado el {date}",
+    "history": "Historial",
+    "historyOffline": "El historial se muestra cuando tienes conexión.",
+    "actions": {
+      "MARK_PAID": "Marcar como pagado",
+      "REVOKE_PAYMENT": "Revertir pago",
+      "MARK_DELIVERED": "Marcar como entregado",
+      "REVOKE_DELIVERY": "Revertir entrega",
+      "CANCEL": "Cancelar pedido"
+    },
+    "events": {
+      "PAYMENT_MARKED": "Pago recibido",
+      "PAYMENT_REVOKED": "Pago revertido",
+      "DELIVERY_MARKED": "Entregado",
+      "DELIVERY_REVOKED": "Entrega revertida",
+      "ORDER_CANCELLED": "Cancelado"
+    },
+    "reason": "Motivo (obligatorio)",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "queued": "{count, plural, one {# acción pendiente de envío} other {# acciones pendientes de envío}}",
+    "notFound": "Este pedido no está disponible en este dispositivo."
+  },
+  "conflict": {
+    "title": "Otra persona modificó este pedido",
+    "explain": "Mientras tus acciones esperaban a enviarse, el pedido cambió en el servidor. Tus acciones no se aplicaron.",
+    "server": "Ahora en el servidor",
+    "mine": "Tus acciones",
+    "reapply": "Volver a aplicar mis acciones",
+    "discard": "Descartar mis acciones",
+    "nothingToApply": "Nada que aplicar: el pedido ya está así.",
+    "willSkip": "{count, plural, one {# acción ya no es posible y se omitirá.} other {# acciones ya no son posibles y se omitirán.}}",
+    "offline": "Conéctate a internet para ver el estado actual y resolverlo.",
+    "rejected": "Se rechazó una acción",
+    "ok": "Vale, entendido"
   }
 }

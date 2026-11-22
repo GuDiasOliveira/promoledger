@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, NetworkError, toApiError } from "@/lib/api/errors";
 import { type OutboxItem, PromoLedgerDB } from "@/lib/db";
 
-import { backoffDelay, MAX_DELAY_MS, retryItem, runSync } from "./engine";
+import { backoffDelay, blockedItems, MAX_DELAY_MS, retryItem, runSync } from "./engine";
 import { createCustomerOffline, createOrderOffline, discardOutboxItem } from "./outbox";
 
 const USER_A = "user-a";
@@ -69,7 +69,7 @@ describe("offline mutations", () => {
     expect(outbox.map((i) => i.kind)).toEqual(["createCustomer", "createOrder"]);
     // The order references the offline (client-generated) customer id.
     expect(outbox[1].payload).toMatchObject({ customer_id: customer.id });
-    expect(outbox[1].idempotencyKey).toBe(order.idempotencyKey);
+    expect(outbox[1].idempotencyKey).toBe(order.ref);
   });
 
   it("discard removes the queued item and its optimistic record", async () => {
@@ -150,15 +150,16 @@ describe("runSync", () => {
     expect(head).toMatchObject({ status: "pending", attempts: 0, nextAttemptAt: 0 });
   });
 
-  it("on 4xx: marks failed/conflict, flags the record, and continues with the rest", async () => {
-    await seedCustomerAndOrder();
-    await seedCustomerAndOrder(); // a second, independent pair
+  it("on 4xx: rejects the item, HOLDS what depends on it, and continues with independent work", async () => {
+    await seedCustomerAndOrder(); // pair 1: its customer will conflict
+    await seedCustomerAndOrder(); // pair 2: independent, must still go through
     const rejected: string[] = [];
+    const sent: string[] = [];
     let call = 0;
-    const send = vi.fn(async () => {
+    const send = vi.fn(async (item: OutboxItem) => {
       call += 1;
       if (call === 1) throw problem(409, "CUSTOMER_ID_CONFLICT");
-      if (call === 2) throw problem(404, "CUSTOMER_NOT_FOUND"); // its dependent order
+      sent.push(item.kind);
     });
 
     const report = await runSync({
@@ -172,16 +173,19 @@ describe("runSync", () => {
       },
     });
 
-    expect(report).toMatchObject({ outcome: "done", sent: 2, failed: 2 });
-    expect(rejected).toEqual(["createCustomer:conflict", "createOrder:failed"]);
+    expect(report).toMatchObject({ outcome: "done", sent: 2, failed: 1 });
+    expect(rejected).toEqual(["createCustomer:conflict"]);
+    expect(sent).toEqual(["createCustomer", "createOrder"]); // pair 2 only
     const left = await db.outbox.orderBy("seq").toArray();
-    expect(left.map((i) => [i.status, i.lastError?.code])).toEqual([
-      ["conflict", "CUSTOMER_ID_CONFLICT"],
-      ["failed", "CUSTOMER_NOT_FOUND"],
+    // Pair 1's order was never sent (it would fail with CUSTOMER_NOT_FOUND): it is held.
+    expect(left.map((i) => [i.kind, i.status])).toEqual([
+      ["createCustomer", "conflict"],
+      ["createOrder", "pending"],
     ]);
+    expect(blockedItems(left)).toEqual(new Set([left[1].seq]));
   });
 
-  it("retryItem puts a failed item back in the queue with the SAME key", async () => {
+  it("retrying the rejected item releases what was held behind it (same keys)", async () => {
     await seedCustomerAndOrder();
     await runSync({
       db,
@@ -192,17 +196,15 @@ describe("runSync", () => {
       now,
       random,
     });
-    const failed = await db.outbox.orderBy("seq").first();
-    expect(failed?.status).toBe("failed");
+    const [customer, order] = await db.outbox.orderBy("seq").toArray();
+    expect([customer.status, order.status]).toEqual(["failed", "pending"]); // order held
 
-    await retryItem(db, failed!.seq!);
+    await retryItem(db, customer.seq!);
     const sentKeys: string[] = [];
     await runSync({ db, userId: USER_A, send: async (i) => void sentKeys.push(i.idempotencyKey), now, random });
 
-    expect(sentKeys).toEqual([failed!.idempotencyKey]); // only the retried item, same key
-    // The order was rejected too and was not retried: it stays failed, untouched.
-    const left = await db.outbox.toArray();
-    expect(left.map((i) => [i.kind, i.status])).toEqual([["createOrder", "failed"]]);
+    expect(sentKeys).toEqual([customer.idempotencyKey, order.idempotencyKey]);
+    expect(await db.outbox.count()).toBe(0);
   });
 
   it("never sends another user's queue (shared devices)", async () => {

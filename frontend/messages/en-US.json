@@ -49,7 +49,8 @@
     "newOrder": "New order",
     "outbox": "Sync queue",
     "notFound": "This promotion is not available on this device.",
-    "notActive": "Orders can only be registered while the promotion is active."
+    "notActive": "Orders can only be registered while the promotion is active.",
+    "myOrders": "My orders"
   },
   "sell": {
     "title": "New order",
@@ -83,12 +84,15 @@
     },
     "kind": {
       "createCustomer": "New customer: {name}",
-      "createOrder": "Order for {name}"
+      "createOrder": "Order for {name}",
+      "transition": "{action}: {name}"
     },
     "attempts": "{count, plural, one {# attempt} other {# attempts}}",
     "retryNow": "Try again now",
     "discard": "Discard",
-    "confirmDiscard": "Discard this change? It will not be sent."
+    "confirmDiscard": "Discard this change? It will not be sent.",
+    "held": "On hold until the item it depends on is resolved",
+    "resolve": "Resolve"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -107,5 +111,67 @@
       "IDEMPOTENCY_KEY_REUSED": "This change conflicts with one already sent.",
       "INSUFFICIENT_ROLE": "You do not have permission to do this."
     }
+  },
+  "orders": {
+    "title": "My orders",
+    "search": "Search by customer",
+    "empty": "No orders here.",
+    "tabs": {
+      "all": "All",
+      "toDeliver": "To deliver",
+      "unpaid": "Unpaid",
+      "divergence": "Divergences",
+      "done": "Done"
+    },
+    "classification": {
+      "UNPAID_PENDING": "Unpaid",
+      "PAID_PENDING": "Paid · to deliver",
+      "DIVERGENCE": "Delivered · unpaid",
+      "SETTLED": "Settled",
+      "CANCELLED": "Cancelled"
+    },
+    "pendingSync": "Waiting to send",
+    "needsAttention": "Needs attention"
+  },
+  "order": {
+    "title": "Order for {name}",
+    "items": "Items",
+    "total": "Total",
+    "estimate": "Estimated total",
+    "placedAt": "Placed {date}",
+    "history": "History",
+    "historyOffline": "The history is shown when you are online.",
+    "actions": {
+      "MARK_PAID": "Mark as paid",
+      "REVOKE_PAYMENT": "Revoke payment",
+      "MARK_DELIVERED": "Mark as delivered",
+      "REVOKE_DELIVERY": "Revoke delivery",
+      "CANCEL": "Cancel order"
+    },
+    "events": {
+      "PAYMENT_MARKED": "Payment received",
+      "PAYMENT_REVOKED": "Payment revoked",
+      "DELIVERY_MARKED": "Delivered",
+      "DELIVERY_REVOKED": "Delivery revoked",
+      "ORDER_CANCELLED": "Cancelled"
+    },
+    "reason": "Reason (required)",
+    "confirm": "Confirm",
+    "back": "Back",
+    "queued": "{count, plural, one {# action waiting to be sent} other {# actions waiting to be sent}}",
+    "notFound": "This order is not available on this device."
+  },
+  "conflict": {
+    "title": "Someone else changed this order",
+    "explain": "While your actions were waiting to be sent, the order changed on the server. Your actions were not applied.",
+    "server": "Now on the server",
+    "mine": "Your actions",
+    "reapply": "Reapply my actions",
+    "discard": "Discard my actions",
+    "nothingToApply": "Nothing to apply: the order is already like this.",
+    "willSkip": "{count, plural, one {# action is no longer possible and will be skipped.} other {# actions are no longer possible and will be skipped.}}",
+    "offline": "Connect to the internet to see the current state and resolve this.",
+    "rejected": "An action was rejected",
+    "ok": "OK, got it"
   }
 }

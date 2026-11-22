@@ -4,28 +4,35 @@ import { useLiveQuery } from "dexie-react-hooks";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
-import { type PromotionScope, promotionHref, WithPromotion } from "@/components/promotion-scope";
+import { orderHref, type PromotionScope, promotionHref, WithPromotion } from "@/components/promotion-scope";
 import { Badge, Button, Card } from "@/components/ui";
 import { ApiError } from "@/lib/api/errors";
 import { db, type OutboxItem } from "@/lib/db";
 import { useErrorMessage } from "@/lib/hooks";
 import { useOutbox } from "@/lib/offline/hooks";
-import { retryItem } from "@/lib/sync/engine";
+import { transitionKind } from "@/lib/orders/state";
+import { blockedItems, retryItem } from "@/lib/sync/engine";
 import { discardOutboxItem } from "@/lib/sync/outbox";
 import { requestSync } from "@/lib/sync/runner";
 
 const STATUS_TONE = { pending: "neutral", failed: "amber", conflict: "amber" } as const;
 
 function useLabel(item: OutboxItem): string {
-  const t = useTranslations("sync.kind");
+  const t = useTranslations();
   const name = useLiveQuery(async () => {
     if (item.kind === "createCustomer") return (await db.customers.get(item.localRef))?.name;
     return (await db.orders.get(item.localRef))?.customerName;
   }, [item.localRef, item.kind]);
-  return t(item.kind, { name: name ?? "…" });
+  if (item.kind === "transition") {
+    return t("sync.kind.transition", {
+      action: t(`order.actions.${transitionKind(item)}`),
+      name: name ?? "…",
+    });
+  }
+  return t(`sync.kind.${item.kind}`, { name: name ?? "…" });
 }
 
-function OutboxRow({ item }: { item: OutboxItem }) {
+function OutboxRow({ item, held }: { item: OutboxItem; held: boolean }) {
   const t = useTranslations("sync");
   const errorMessage = useErrorMessage();
   const label = useLabel(item);
@@ -47,11 +54,22 @@ function OutboxRow({ item }: { item: OutboxItem }) {
       {item.lastError ? (
         <p className="text-sm text-red-700 dark:text-red-400">{errorMessage(new ApiError(item.lastError))}</p>
       ) : null}
+      {held ? <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("held")}</p> : null}
       {item.attempts > 0 ? <p className="text-xs text-zinc-500">{t("attempts", { count: item.attempts })}</p> : null}
       <div className="flex gap-2">
-        <Button variant="ghost" onClick={retry}>
-          {t("retryNow")}
-        </Button>
+        {item.kind === "transition" && item.status !== "pending" ? (
+          // A rejected action is stale (version/state changed): resolve it on the order screen.
+          <Link
+            href={orderHref(item.promotionId, item.localRef.slice(item.userId.length + 1))}
+            className="flex min-h-11 items-center rounded-lg px-4 font-medium text-indigo-600"
+          >
+            {t("resolve")}
+          </Link>
+        ) : (
+          <Button variant="ghost" onClick={retry}>
+            {t("retryNow")}
+          </Button>
+        )}
         {item.status !== "pending" ? (
           <Button variant="ghost" onClick={discard}>
             {t("discard")}
@@ -65,6 +83,7 @@ function OutboxRow({ item }: { item: OutboxItem }) {
 function SyncQueue({ userId, promotion }: PromotionScope) {
   const t = useTranslations();
   const items = useOutbox(userId, promotion.id);
+  const held = blockedItems(items ?? []);
 
   return (
     <div className="space-y-4">
@@ -80,7 +99,7 @@ function SyncQueue({ userId, promotion }: PromotionScope) {
         ) : (
           <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
             {items.map((item) => (
-              <OutboxRow key={item.id} item={item} />
+              <OutboxRow key={item.id} item={item} held={held.has(item.seq!)} />
             ))}
           </ul>
         )}

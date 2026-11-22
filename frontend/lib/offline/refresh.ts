@@ -3,8 +3,16 @@
  * these pull fresh data whenever the network allows. Errors propagate to the caller
  * (React Query), which simply keeps the cached data when offline.
  */
-import { api, unwrap } from "@/lib/api/client";
-import { type CachedCustomer, type CachedProduct, type CachedPromotion, type PromoLedgerDB, scopedKey } from "@/lib/db";
+import { api, type Schemas, unwrap } from "@/lib/api/client";
+import {
+  type CachedCustomer,
+  type CachedOrder,
+  type CachedProduct,
+  type CachedPromotion,
+  type PromoLedgerDB,
+  scopedKey,
+} from "@/lib/db";
+import { applyServerOrder, mergeLines, snapshotFromServer } from "@/lib/sync/send";
 
 const PAGE_SIZE = 100;
 const MAX_CUSTOMER_PAGES = 5; // up to 500 customers cached per promotion (MVP)
@@ -100,4 +108,64 @@ export async function refreshCustomers(
   }
   // Upsert only: customers created offline (still pending) must be kept.
   await db.customers.bulkPut(rows);
+}
+
+const MAX_ORDER_PAGES = 5; // up to 500 orders cached per promotion (MVP)
+
+/**
+ * Pull the seller's orders (the API already limits sellers to their own). Rows created on
+ * this device are matched by serverId; a server snapshot never overwrites a newer one.
+ */
+export async function refreshOrders(
+  db: PromoLedgerDB,
+  userId: string,
+  promotionId: string,
+): Promise<void> {
+  const serverOrders: Schemas["OrderResponse"][] = [];
+  for (let pageNumber = 1; pageNumber <= MAX_ORDER_PAGES; pageNumber += 1) {
+    const page = await unwrap(
+      api.GET("/api/v1/promotions/{promotion_id}/orders", {
+        params: { path: { promotion_id: promotionId }, query: { page: pageNumber, size: PAGE_SIZE } },
+      }),
+    );
+    serverOrders.push(...page.items);
+    if (pageNumber * PAGE_SIZE >= page.total) break;
+  }
+  await db.transaction("rw", db.orders, async () => {
+    for (const order of serverOrders) {
+      const existing = (await db.orders.where("serverId").equals(order.id).toArray()).find(
+        (row) => row.userId === userId,
+      );
+      const snapshot = snapshotFromServer(order);
+      if (existing) {
+        if (order.version >= existing.version) {
+          await db.orders.update(existing.key, { ...snapshot, lines: mergeLines(existing, snapshot) });
+        }
+        continue;
+      }
+      const ref = `srv:${order.id}`;
+      await db.orders.put({
+        ...snapshot,
+        key: scopedKey(userId, ref),
+        ref,
+        userId,
+        promotionId,
+        markPaidNow: false,
+        createdAt: order.created_at,
+        auditEvents: snapshot.auditEvents ?? null,
+      } as CachedOrder);
+    }
+  });
+}
+
+/** Fetch one order with its audit history (online), storing it as the latest snapshot. */
+export async function fetchOrderDetail(db: PromoLedgerDB, key: string, promotionId: string, serverId: string) {
+  const order = await unwrap(
+    api.GET("/api/v1/promotions/{promotion_id}/orders/{order_id}", {
+      params: { path: { promotion_id: promotionId, order_id: serverId } },
+    }),
+  );
+  const current = await db.orders.get(key);
+  if (!current || order.version >= current.version) await applyServerOrder(db, key, order);
+  return order;
 }

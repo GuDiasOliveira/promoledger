@@ -34,7 +34,10 @@ def sees_all_orders(ctx: PromotionContext) -> bool:
 
 
 def _orders_query(*, with_audit: bool = False) -> Select[tuple[Order]]:
-    options = [selectinload(Order.customer), selectinload(Order.items)]
+    options = [
+        selectinload(Order.customer),
+        selectinload(Order.items).selectinload(OrderItem.product),
+    ]
     if with_audit:
         options.append(selectinload(Order.audit_events))
     # populate_existing: always reflect DB state, even for objects already in the identity map.

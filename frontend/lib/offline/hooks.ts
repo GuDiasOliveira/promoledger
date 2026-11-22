@@ -9,7 +9,10 @@ import { db } from "@/lib/db";
 import { useToken } from "@/lib/hooks";
 import { getLastOutcome, subscribeOutcome } from "@/lib/sync/runner";
 
-import { refreshCatalog, refreshCustomers, refreshPromotions } from "./refresh";
+import { deriveOrder } from "@/lib/orders/state";
+import { blockedItems } from "@/lib/sync/engine";
+
+import { refreshCatalog, refreshCustomers, refreshOrders, refreshPromotions } from "./refresh";
 
 export function useUserId(): string | null {
   return getUserId(useToken());
@@ -90,4 +93,36 @@ export function useOutbox(userId: string | null, promotionId?: string | null) {
     const rows = await db.outbox.where("userId").equals(userId).sortBy("seq");
     return promotionId ? rows.filter((r) => r.promotionId === promotionId) : rows;
   }, [userId, promotionId]);
+}
+
+/** The seller's orders for a promotion, each derived as server snapshot + queued actions. */
+export function useOrders(userId: string | null, promotionId: string | null) {
+  const enabled = userId !== null && promotionId !== null;
+  useRefresh(["orders", userId, promotionId], enabled, () => refreshOrders(db, userId!, promotionId!));
+  return useLiveQuery(async () => {
+    if (!enabled) return [];
+    const [orders, queue] = await Promise.all([
+      db.orders.where("[userId+promotionId]").equals([userId, promotionId]).toArray(),
+      db.outbox.where("userId").equals(userId).sortBy("seq"),
+    ]);
+    return orders
+      .map((order) => deriveOrder(order, queue))
+      .sort((a, b) => b.order.createdAt.localeCompare(a.order.createdAt));
+  }, [userId, promotionId]);
+}
+
+/** One order (by local key), derived, plus whether its creation is still queued. */
+export function useOrder(orderKey: string | null) {
+  return useLiveQuery(async () => {
+    if (!orderKey) return null;
+    const order = await db.orders.get(orderKey);
+    if (!order) return null;
+    const queue = await db.outbox.where("userId").equals(order.userId).sortBy("seq");
+    const held = blockedItems(queue);
+    return {
+      ...deriveOrder(order, queue),
+      actions: queue.filter((i) => i.kind === "transition" && i.localRef === orderKey),
+      held,
+    };
+  }, [orderKey]);
 }

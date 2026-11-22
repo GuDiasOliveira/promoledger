@@ -287,7 +287,7 @@ Content-Type: application/json
 
 - A member whose roles are only `seller` sees only their own orders (the `seller_member_id` filter is ignored for them); `promotion_admin` / `promotion_viewer` see all.
 - `status_classification` filter values (ERM §3): `UNPAID_PENDING`, `PAID_PENDING`, `DIVERGENCE`, `SETTLED`, `CANCELLED`.
-- Each order includes `customer`, `items` (with `unit_price` and `line_total`), `total_amount`, `version` and `status_classification`. `GET .../orders/{order_id}` also includes `audit_events`. An order outside the caller's visibility → `404 ORDER_NOT_FOUND`.
+- Each order includes `customer`, `items` (with `product_name`, `unit_price` and `line_total`), `total_amount`, `version` and `status_classification`. `product_name` is the current catalog name (also for archived products) and is display-only; `unit_price` remains the frozen snapshot. `GET .../orders/{order_id}` also includes `audit_events`. An order outside the caller's visibility → `404 ORDER_NOT_FOUND`.
 
 ### Catalog, Customers & Orders Error Codes
 

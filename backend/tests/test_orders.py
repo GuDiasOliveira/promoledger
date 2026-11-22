@@ -568,3 +568,31 @@ async def test_audit_events_are_append_only(
     with pytest.raises(DBAPIError, match="append-only"):
         async with db_session.begin_nested():
             await db_session.execute(text(statement))
+
+
+async def test_items_include_product_name_even_after_archiving(
+    client: AsyncClient,
+    active_promotion: Promotion,
+    seller: PromotionMember,
+    user: User,
+    customer: Customer,
+    product: Product,
+) -> None:
+    created = await place_order(
+        client, active_promotion, seller, order_payload(customer, (product, 2))
+    )
+    assert created.json()["items"][0]["product_name"] == "Ovo 400g"
+
+    archive = await client.patch(
+        f"/api/v1/promotions/{active_promotion.id}/products/{product.id}",
+        json={"is_active": False},
+        headers=bearer(user),
+    )
+    assert archive.status_code == 200
+
+    detail = await client.get(
+        f"{orders_url(active_promotion)}/{created.json()['id']}", headers=bearer(seller.user)
+    )
+    listing = await client.get(orders_url(active_promotion), headers=bearer(seller.user))
+    assert detail.json()["items"][0]["product_name"] == "Ovo 400g"
+    assert listing.json()["items"][0]["items"][0]["product_name"] == "Ovo 400g"
