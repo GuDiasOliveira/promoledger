@@ -4,9 +4,11 @@ from decimal import Decimal
 
 from sqlalchemy import (
     CHAR,
+    BigInteger,
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Identity,
     Index,
     Integer,
     String,
@@ -18,7 +20,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 from app.models.catalog import MONEY, Customer, Product
-from app.models.enums import AuditEventType, StatusClassification, sql_in_list
+from app.models.enums import (
+    REASON_REQUIRED_EVENTS,
+    AuditEventType,
+    StatusClassification,
+    sql_in_list,
+)
 from app.models.mixins import CreatedAtMixin, TimestampMixin, UUIDPrimaryKeyMixin
 
 ZERO = Decimal("0.00")
@@ -52,7 +59,7 @@ class Order(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         lazy="raise", cascade="all, delete-orphan", order_by="OrderItem.id"
     )
     audit_events: Mapped[list["OrderAuditEvent"]] = relationship(
-        lazy="raise", order_by="OrderAuditEvent.created_at"
+        lazy="raise", order_by="OrderAuditEvent.seq"
     )
 
     @property
@@ -103,6 +110,16 @@ class OrderAuditEvent(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     __tablename__ = "order_audit_event"
     __table_args__ = (
         CheckConstraint(f"event_type IN ({sql_in_list(AuditEventType)})", name="event_type_valid"),
+        # coalesce(): char_length(trim(NULL)) is NULL, and a NULL CHECK result would pass.
+        CheckConstraint(
+            f"event_type NOT IN ({sql_in_list(REASON_REQUIRED_EVENTS)}) "
+            "OR coalesce(char_length(trim(reason)), 0) > 0",
+            name="reason_required",
+        ),
+        CheckConstraint(
+            "(idempotency_key IS NULL) = (idempotency_fingerprint IS NULL)",
+            name="idempotency_pair",
+        ),
     )
 
     order_id: Mapped[uuid.UUID] = mapped_column(
@@ -113,3 +130,10 @@ class OrderAuditEvent(UUIDPrimaryKeyMixin, CreatedAtMixin, Base):
     )
     event_type: Mapped[str] = mapped_column(String(32))
     reason: Mapped[str | None] = mapped_column(Text)
+    # Transition Idempotency-Key; NULL for the creation-time PAYMENT_MARKED (mark_paid_now),
+    # which is covered by ORDER.idempotency_key.
+    idempotency_key: Mapped[str | None] = mapped_column(String(64), unique=True)
+    idempotency_fingerprint: Mapped[str | None] = mapped_column(CHAR(64))
+    # Monotonic append order. created_at alone can tie (now() is per-transaction), and a
+    # forensic stream must never depend on a random UUID tie-breaker.
+    seq: Mapped[int] = mapped_column(BigInteger, Identity(always=True), unique=True)

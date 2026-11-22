@@ -2,6 +2,7 @@ import hashlib
 import json
 import uuid
 from dataclasses import dataclass
+from typing import Any
 
 from sqlalchemy import ColumnElement, Select, and_, func, select
 from sqlalchemy.exc import IntegrityError
@@ -40,21 +41,23 @@ def _orders_query(*, with_audit: bool = False) -> Select[tuple[Order]]:
     return select(Order).options(*options).execution_options(populate_existing=True)
 
 
-_CLASSIFICATION_FILTERS: dict[StatusClassification, ColumnElement[bool]] = {
-    StatusClassification.CANCELLED: Order.cancelled_at.is_not(None),
-    StatusClassification.SETTLED: and_(
-        Order.cancelled_at.is_(None), Order.paid_at.is_not(None), Order.delivered_at.is_not(None)
-    ),
-    StatusClassification.PAID_PENDING: and_(
-        Order.cancelled_at.is_(None), Order.paid_at.is_not(None), Order.delivered_at.is_(None)
-    ),
-    StatusClassification.DIVERGENCE: and_(
-        Order.cancelled_at.is_(None), Order.paid_at.is_(None), Order.delivered_at.is_not(None)
-    ),
-    StatusClassification.UNPAID_PENDING: and_(
-        Order.cancelled_at.is_(None), Order.paid_at.is_(None), Order.delivered_at.is_(None)
-    ),
-}
+def classification_conditions(
+    paid_at: ColumnElement[Any], delivered_at: ColumnElement[Any], cancelled_at: ColumnElement[Any]
+) -> dict[StatusClassification, ColumnElement[bool]]:
+    """ERM §3 reconciliation matrix as SQL predicates over the given columns."""
+    live = cancelled_at.is_(None)
+    return {
+        StatusClassification.CANCELLED: cancelled_at.is_not(None),
+        StatusClassification.SETTLED: and_(live, paid_at.is_not(None), delivered_at.is_not(None)),
+        StatusClassification.PAID_PENDING: and_(live, paid_at.is_not(None), delivered_at.is_(None)),
+        StatusClassification.DIVERGENCE: and_(live, paid_at.is_(None), delivered_at.is_not(None)),
+        StatusClassification.UNPAID_PENDING: and_(live, paid_at.is_(None), delivered_at.is_(None)),
+    }
+
+
+_CLASSIFICATION_FILTERS = classification_conditions(
+    Order.paid_at, Order.delivered_at, Order.cancelled_at
+)
 
 
 @dataclass(frozen=True)

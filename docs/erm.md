@@ -117,6 +117,9 @@ erDiagram
         uuid actor_member_id FK
         varchar event_type "PAYMENT_MARKED | PAYMENT_REVOKED | DELIVERY_MARKED | DELIVERY_REVOKED | ORDER_CANCELLED"
         text reason "nullable, mandatory on REVOKED/CANCELLED"
+        varchar idempotency_key UK "nullable; transition Idempotency-Key"
+        char idempotency_fingerprint "nullable; SHA-256 of transition payload"
+        bigint seq UK "identity; monotonic append order"
         timestamptz created_at
     }
 ```
@@ -269,6 +272,8 @@ Core transactional ledger entity tracking a customer purchase mediated by a fiel
 > - An order cannot be modified once `cancelled_at` is set.
 > - Orders can only be **created** while `PROMOTION.status = 'ACTIVE'`. The sales-window dates are not enforced server-side, because offline captures may sync after `last_sales_date`; closing sales is an explicit admin action (`ACTIVE → CLOSED`).
 > - An idempotent retry (same key + same fingerprint) returns the existing order even if the promotion has since been closed.
+> - **Transition rules:** no transition on a cancelled order; `MARK_PAID` / `MARK_DELIVERED` require the timestamp to be `NULL`; `REVOKE_*` require it to be set; `MARK_DELIVERED` is allowed while unpaid (this is exactly what creates a divergence). **Cancellation** requires `delivered_at IS NULL` **and** `paid_at IS NULL` — a paid order must first have its payment revoked (with a reason such as a refund), so collected cash never silently disappears from reconciliation.
+> - Transitions are allowed while the promotion is `ACTIVE` or `CLOSED` (deliveries and reconciliation happen on delivery day, after sales close).
 > - `paid_at` and `delivered_at` are tracked independently to allow immediate real-time divergence queries.
 
 ---
@@ -299,9 +304,16 @@ Append-only immutable event log capturing all state changes and reversions.
 | `order_id`        | `UUID`        | NOT NULL, FK -> `ORDER(id)` ON DELETE CASCADE                                                                        | Target order.                                                                  |
 | `actor_member_id` | `UUID`        | NOT NULL, FK -> `PROMOTION_MEMBER(id)` ON DELETE RESTRICT                                                            | Actor who initiated the transition.                                            |
 | `event_type`      | `VARCHAR(32)` | NOT NULL, CHECK in `('PAYMENT_MARKED', 'PAYMENT_REVOKED', 'DELIVERY_MARKED', 'DELIVERY_REVOKED', 'ORDER_CANCELLED')` | Transition type.                                                               |
-| `reason`          | `TEXT`        | NULL                                                                                                                 | Mandatory explanation when revoking a payment/delivery or cancelling an order. |
+| `reason`          | `TEXT`        | NULL, CHECK (`event_type NOT IN ('PAYMENT_REVOKED','DELIVERY_REVOKED','ORDER_CANCELLED') OR coalesce(char_length(trim(reason)), 0) > 0`) | Mandatory explanation when revoking a payment/delivery or cancelling an order. |
+| `idempotency_key` | `VARCHAR(64)` | NULL, UNIQUE                                                                                                         | `Idempotency-Key` of the transition request that produced this event. `NULL` for the `PAYMENT_MARKED` event written at order creation (`mark_paid_now`), which is protected by `ORDER.idempotency_key`. |
+| `idempotency_fingerprint` | `CHAR(64)` | NULL, CHECK (`(idempotency_key IS NULL) = (idempotency_fingerprint IS NULL)`)                                  | SHA-256 of the canonical transition payload (order, actor, event type, expected version, reason). |
+| `seq`             | `BIGINT`      | NOT NULL, `GENERATED ALWAYS AS IDENTITY`, UNIQUE                                                                    | Monotonic append order. The audit stream is ordered by `seq`, never by `created_at` alone (`NOW()` is per-transaction and can tie). |
 | `created_at`      | `TIMESTAMPTZ` | NOT NULL, default `NOW()`                                                                                            | Immutable event timestamp.                                                     |
 
+> **Why `coalesce` in the reason CHECK:** `char_length(trim(NULL))` is `NULL`, and a `NULL` CHECK result passes — without `coalesce`, a revoke/cancel with no reason would be accepted.
+>
+> **Transition idempotency:** every transition writes exactly one audit event, so the event row is the durable record of the request's `Idempotency-Key` (no separate idempotency table).
+>
 > **Append-only enforcement:** a `BEFORE UPDATE OR DELETE` trigger (`trg_order_audit_event_append_only`) raises an exception, so the log is immutable even for the application's own database role. As a consequence, an order that has audit events cannot be deleted (orders are never deleted by design).
 
 ---

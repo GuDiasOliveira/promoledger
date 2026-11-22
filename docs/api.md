@@ -24,7 +24,7 @@ This document specifies the RESTful API design conventions, HTTP status codes, h
 | :---------------- | :------- | :--------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------- |
 | `Authorization`   | `string` | Standard Bearer JWT: `Bearer <token>`.                                                               | All protected endpoints.                                                                   |
 | `Idempotency-Key` | `UUIDv4` | Unique client-generated key preventing duplicate submissions upon network retries.                   | `POST /promotions/{id}/orders` and state transitions (`/payment`, `/delivery`, `/cancel`). |
-| `If-Match`        | `string` | Optional HTTP concurrency header containing the entity `version`. (Alternatively passed in payload). | State transition endpoints.                                                                |
+| `If-Match`        | `string` | Optional HTTP concurrency header containing the entity `version`. (Alternatively passed in payload). **Not supported in the MVP** — send `expected_version` in the body. | State transition endpoints.                                                                |
 
 ### 1.4 Pagination Standard
 
@@ -348,7 +348,25 @@ To enforce auditability, status changes (`paid_at`, `delivered_at`, `cancelled_a
     "reason": "Customer cancelled order before fulfillment day"
   }
   ```
-- **Side Effect:** Appends `ORDER_CANCELLED` to `ORDER_AUDIT_EVENT`, sets `cancelled_at = NOW()`, increments `version`. Fails with `400 Bad Request` if `delivered_at` is already set.
+- **Side Effect:** Appends `ORDER_CANCELLED` to `ORDER_AUDIT_EVENT`, sets `cancelled_at = NOW()`, increments `version`. Fails with `400 Bad Request` if `delivered_at` is already set, or if `paid_at` is set (revoke the payment first).
+
+### 8.4 Transition Processing Order & Responses
+
+Each transition runs in a single transaction, evaluated in this order:
+
+1. **Idempotent replay** — key already used with the same payload by the same member → `200 OK` with the *current* order state and `Idempotent-Replayed: true` (even if later transitions changed the version). Same key, different payload/actor → `409 IDEMPOTENCY_KEY_REUSED`.
+2. **Visibility & permission** — order outside the caller's visibility → `404 ORDER_NOT_FOUND`; visible but not modifiable (e.g. a seller+viewer on another seller's order) → `403 INSUFFICIENT_ROLE`.
+3. **OCC** — `expected_version` ≠ current `version` → `409 CONCURRENCY_CONFLICT` (detail: `expected: N, current: M`).
+4. **Transition rule** — not allowed in the current state → `400 INVALID_TRANSITION` (detail explains why).
+5. **Write** — `UPDATE ... SET <timestamp>, version = version + 1 WHERE id = :id AND version = :expected`; 0 rows (concurrent change) → `409 CONCURRENCY_CONFLICT`, unless the concurrent winner was this same idempotent request (→ replay `200`). Then the audit event is appended.
+
+Success → `200 OK` with the full order (`items`, `audit_events`, new `version`). `reason` is required (non-blank) for `REVOKE_PAYMENT`, `REVOKE_DELIVERY` and cancellation (`422` otherwise).
+
+| Status | `code`                   | When                                                       |
+| :----- | :----------------------- | :--------------------------------------------------------- |
+| `400`  | `INVALID_TRANSITION`     | Transition not allowed in the order's current state.       |
+| `409`  | `CONCURRENCY_CONFLICT`   | `expected_version` does not match (stale client).          |
+| `409`  | `IDEMPOTENCY_KEY_REUSED` | Key already used for a different transition or actor.      |
 
 ---
 
@@ -362,3 +380,10 @@ Endpoints powering the audit dashboards, divergence alerts, and KPIs.
 | `GET`  | `/api/v1/promotions/{id}/reconciliation/divergences`  | `PROMOTION_VIEWER` | Filtered list of all orders flagged in divergence state (`paid_at IS NULL AND delivered_at IS NOT NULL`).                                       |
 | `GET`  | `/api/v1/promotions/{id}/reconciliation/leaderboard`  | `PROMOTION_VIEWER` | Seller rankings: units sold, gross revenue, settlement percentage.                                                                              |
 | `GET`  | `/api/v1/promotions/{id}/reconciliation/audit-events` | `PROMOTION_ADMIN`  | Comprehensive chronological stream of all `ORDER_AUDIT_EVENT` rows for forensic verification.                                                   |
+
+- `PROMOTION_VIEWER` endpoints are also open to `PROMOTION_ADMIN`; seller-only members get `403 INSUFFICIENT_ROLE`.
+- All amounts are exact decimal strings computed in SQL over `quantity × unit_price` (`NUMERIC`). Cancelled orders are excluded from revenue.
+- **`summary`** — `total_revenue`, `collected_amount` (paid), `outstanding_amount` (revenue − collected), `units_ordered`, `units_delivered`, and `by_classification`: `{count, amount}` for each of `UNPAID_PENDING`, `PAID_PENDING`, `DIVERGENCE`, `SETTLED`, `CANCELLED`.
+- **`divergences`** — paginated orders with `paid_at IS NULL AND delivered_at IS NOT NULL AND cancelled_at IS NULL` (same shape as the order list).
+- **`leaderboard`** — per seller with at least one non-cancelled order: `member_id`, `user_id`, `name`, `order_count`, `units_sold`, `gross_revenue`, `settled_amount`, `settlement_percentage` (`"75.00"`), ordered by `gross_revenue` desc.
+- **`audit-events`** — paginated, chronological (oldest first); optional filters `order_id`, `event_type`.

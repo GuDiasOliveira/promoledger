@@ -7,14 +7,16 @@ Alembic migrations once per session.
 
 import asyncio
 import os
+import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from decimal import Decimal
 from pathlib import Path
+from typing import Any
 
 import pytest
 from alembic import command
 from alembic.config import Config
-from httpx import ASGITransport, AsyncClient
+from httpx import ASGITransport, AsyncClient, Response
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -230,3 +232,43 @@ def customer_factory(db_session: AsyncSession) -> CustomerFactory:
         return customer
 
     return _create
+
+
+def orders_url(promotion: Promotion) -> str:
+    return f"/api/v1/promotions/{promotion.id}/orders"
+
+
+def new_key() -> dict[str, str]:
+    return {"Idempotency-Key": str(uuid.uuid4())}
+
+
+@pytest.fixture
+async def product(active_promotion: Promotion, product_factory: ProductFactory) -> Product:
+    return await product_factory(active_promotion, name="Ovo 400g", price="19.90")
+
+
+@pytest.fixture
+async def customer(active_promotion: Promotion, customer_factory: CustomerFactory) -> Customer:
+    return await customer_factory(active_promotion)
+
+
+def order_payload(customer: Customer, *lines: tuple[Product, int], **extra: Any) -> dict[str, Any]:
+    return {
+        "customer_id": str(customer.id),
+        "items": [{"product_id": str(p.id), "quantity": q} for p, q in lines],
+        **extra,
+    }
+
+
+async def place_order(
+    client: AsyncClient,
+    promotion: Promotion,
+    member: PromotionMember,
+    payload: dict[str, Any],
+    headers: dict[str, str] | None = None,
+) -> Response:
+    return await client.post(
+        orders_url(promotion),
+        json=payload,
+        headers={**bearer(member.user), **(headers or new_key())},
+    )

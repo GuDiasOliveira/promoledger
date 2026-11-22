@@ -93,6 +93,15 @@ PromotionAdminContext = Annotated[
     PromotionContext, Depends(require_promotion_role(Role.PROMOTION_ADMIN))
 ]
 PromotionSellerContext = Annotated[PromotionContext, Depends(require_promotion_role(Role.SELLER))]
+# "Min role PROMOTION_VIEWER" in docs/api.md §9 also admits admins.
+PromotionViewerContext = Annotated[
+    PromotionContext,
+    Depends(require_promotion_role(Role.PROMOTION_VIEWER, Role.PROMOTION_ADMIN)),
+]
+# Transitions: sellers (own orders, checked in the service) and admins (any order).
+PromotionOperatorContext = Annotated[
+    PromotionContext, Depends(require_promotion_role(Role.SELLER, Role.PROMOTION_ADMIN))
+]
 
 
 # --- Idempotency ----------------------------------------------------------------------------

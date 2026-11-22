@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from enum import StrEnum
 
 
@@ -21,6 +22,14 @@ class AuditEventType(StrEnum):
     ORDER_CANCELLED = "ORDER_CANCELLED"
 
 
+# Events that must carry a non-blank `reason` (enforced in schema validation and a DB CHECK).
+REASON_REQUIRED_EVENTS = (
+    AuditEventType.PAYMENT_REVOKED,
+    AuditEventType.DELIVERY_REVOKED,
+    AuditEventType.ORDER_CANCELLED,
+)
+
+
 class StatusClassification(StrEnum):
     """Derived order state (ERM §3 reconciliation matrix)."""
 
@@ -31,6 +40,6 @@ class StatusClassification(StrEnum):
     CANCELLED = "CANCELLED"
 
 
-def sql_in_list(values: type[StrEnum]) -> str:
+def sql_in_list(values: Iterable[StrEnum]) -> str:
     """Render enum values as a SQL literal list, e.g. `'A', 'B'` (for CHECK constraints)."""
     return ", ".join(f"'{member.value}'" for member in values)

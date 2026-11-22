@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 import pytest
-from httpx import AsyncClient, Response
+from httpx import AsyncClient
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -18,47 +18,11 @@ from tests.conftest import (
     PromotionFactory,
     UserFactory,
     bearer,
+    new_key,
+    order_payload,
+    orders_url,
+    place_order,
 )
-
-
-def orders_url(promotion: Promotion) -> str:
-    return f"/api/v1/promotions/{promotion.id}/orders"
-
-
-def new_key() -> dict[str, str]:
-    return {"Idempotency-Key": str(uuid.uuid4())}
-
-
-@pytest.fixture
-async def product(active_promotion: Promotion, product_factory: ProductFactory) -> Product:
-    return await product_factory(active_promotion, name="Ovo 400g", price="19.90")
-
-
-@pytest.fixture
-async def customer(active_promotion: Promotion, customer_factory: CustomerFactory) -> Customer:
-    return await customer_factory(active_promotion)
-
-
-def order_payload(customer: Customer, *lines: tuple[Product, int], **extra: Any) -> dict[str, Any]:
-    return {
-        "customer_id": str(customer.id),
-        "items": [{"product_id": str(p.id), "quantity": q} for p, q in lines],
-        **extra,
-    }
-
-
-async def place_order(
-    client: AsyncClient,
-    promotion: Promotion,
-    member: PromotionMember,
-    payload: dict[str, Any],
-    headers: dict[str, str] | None = None,
-) -> Response:
-    return await client.post(
-        orders_url(promotion),
-        json=payload,
-        headers={**bearer(member.user), **(headers or new_key())},
-    )
 
 
 async def count_orders(db_session: AsyncSession) -> int:
