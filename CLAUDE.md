@@ -93,6 +93,12 @@ docker-compose.yml      # Local dev services (PostgreSQL 16)
 - **E2E (Playwright, production build):** `npm run test:e2e` — starts its own backend (`:8001`) and frontend (`:3001`) and recreates the `promoledger_e2e` database on every run (never `promoledger_test`).
 - **PWA icons:** edit `public/icons/icon.svg`, then `node scripts/gen-icons.mjs`.
 
+### CI (GitHub Actions)
+
+- `.github/workflows/ci.yml` runs on pushes to `main` and on PRs. Its jobs are backend (ruff, format check, pytest on a Postgres service), frontend (lint, typecheck, vitest, `format:check`, build), api-contract (`gen:api` must leave `frontend/lib/api/` unchanged) and e2e (Playwright, after the others).
+- Keep it in step with the verification commands above: a new check that runs locally belongs in CI too. Node version: root `.nvmrc`. Python: `PYTHON_VERSION` in the workflow.
+- No CD yet: there is no hosting target.
+
 ### MCP Server (Slice 5)
 
 - **Location & run:** `backend/app/mcp/` — `PROMOLEDGER_API_URL=http://localhost:8000 PROMOLEDGER_TOKEN=pl_... uv run python -m app.mcp` (stdio). Setup for AI clients: `backend/app/mcp/README.md`.

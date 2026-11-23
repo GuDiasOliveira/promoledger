@@ -1,0 +1,157 @@
+# Continuous integration: the same checks listed under "Verification commands" in README.md.
+# No deployment yet (no hosting target); this workflow only verifies.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch/PR cancels the run in progress.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: "3.13"
+
+jobs:
+  backend:
+    name: Backend (ruff + pytest)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      # Tests always run against PostgreSQL, never SQLite (TEXT[], partial unique indexes, UUID).
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: promoledger
+          POSTGRES_PASSWORD: promoledger
+          POSTGRES_DB: promoledger_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U promoledger -d promoledger_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql+asyncpg://promoledger:promoledger@localhost:5432/promoledger_test
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest -v
+
+  frontend:
+    name: Frontend (lint, types, unit, format, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      # Prettier over the whole repository (not just /frontend), with the pinned version.
+      - run: npm run format:check
+      - run: npm run build
+
+  api-contract:
+    name: API contract in sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: uv sync --locked
+        working-directory: backend
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run gen:api
+        working-directory: frontend
+      # Fails when a backend contract change was committed without re-running `npm run gen:api`.
+      - name: Check generated types are committed
+        run: |
+          if ! git diff --exit-code -- frontend/lib/api/; then
+            echo "::error::frontend/lib/api is out of date. Run 'npm run gen:api' in /frontend and commit the result."
+            exit 1
+          fi
+
+  e2e:
+    name: E2E (Playwright)
+    needs: [backend, frontend, api-contract]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: frontend
+    services:
+      # The E2E global setup drops and recreates `promoledger_e2e` through this server.
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: promoledger
+          POSTGRES_PASSWORD: promoledger
+          POSTGRES_DB: promoledger
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U promoledger -d promoledger"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: uv sync --locked
+        working-directory: backend
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Builds for production and starts its own API (:8001) and web (:3001) servers.
+      - run: npm run test:e2e
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: frontend/test-results/
+          retention-days: 7

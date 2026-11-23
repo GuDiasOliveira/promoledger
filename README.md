@@ -169,6 +169,15 @@ API request and response types are generated, never hand-written. Re-run `npm ru
 after any backend contract change. The E2E suite recreates the `promoledger_e2e` database on
 every run and never touches `promoledger_test`.
 
+**CI** (`.github/workflows/ci.yml`, GitHub Actions) runs all of the above on every push to
+`main` and every pull request: the backend job (ruff, `ruff format --check`, pytest against a
+PostgreSQL 16 service), the frontend job (lint, typecheck, unit tests, `format:check`, build),
+an API contract job that re-runs `npm run gen:api` and fails if `frontend/lib/api/` changes,
+and the Playwright E2E suite once those pass (traces are uploaded when it fails). Node comes from
+the root `.nvmrc` and Python from `PYTHON_VERSION` in the workflow. Dependabot
+(`.github/dependabot.yml`) opens weekly update PRs for actions, npm and uv. `prettier` is excluded
+from those because it stays pinned.
+
 **Formatting is defined by the repository**, so Claude Code and an editor produce identical
 bytes. Prettier (`.prettierrc.json`, width 100, version pinned to match the editor extension's
 bundled one) formats everything except Python; ruff (`backend/pyproject.toml`) formats Python.
@@ -300,8 +309,9 @@ correctness is checked by machines rather than by eye:
 
 - Commits are one per slice, so the history shows outcomes rather than the iteration inside
   each slice.
-- There is no CI pipeline or hosted deployment yet; every check above runs locally with the
-  commands in [Verification commands](#verification-commands).
+- There is no hosted deployment yet. CI (`.github/workflows/ci.yml`) runs the checks in
+  [Verification commands](#verification-commands) on every push to `main` and every pull
+  request, but nothing is deployed.
 
 ## Repository layout
 
