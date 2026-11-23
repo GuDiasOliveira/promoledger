@@ -1,0 +1,5 @@
+# Mechanical reformat commits, skipped by `git blame` when
+# `git config blame.ignoreRevsFile .git-blame-ignore-revs` is set (GitHub uses it automatically).
+
+# style: apply Prettier (width 100) across the repo
+fcea1a71754085caafcd4e870064777def2186df
