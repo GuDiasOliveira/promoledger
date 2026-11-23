@@ -307,3 +307,7 @@ CLAUDE.md         conventions, invariants and known traps for AI coding agents
 
 Contributors and coding agents should read [`CLAUDE.md`](CLAUDE.md) before writing code: it
 holds the domain invariants and a list of traps already paid for.
+
+## License
+
+Released under the [MIT License](LICENSE).
