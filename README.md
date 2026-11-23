@@ -159,6 +159,7 @@ indexes and native `UUID`.
 
 ```bash
 npm run lint && npm run typecheck && npm test && npm run build
+npm run format         # Prettier over the whole repo (TS, JSON, Markdown, YAML, CSS)
 npm run gen:api        # regenerate the typed API contract from the FastAPI OpenAPI schema
 npx playwright install chromium   # once, before the first E2E run
 npm run test:e2e       # production build; starts its own API :8001 and web :3001
@@ -167,6 +168,15 @@ npm run test:e2e       # production build; starts its own API :8001 and web :300
 API request and response types are generated, never hand-written. Re-run `npm run gen:api`
 after any backend contract change. The E2E suite recreates the `promoledger_e2e` database on
 every run and never touches `promoledger_test`.
+
+**Formatting is defined by the repository**, so Claude Code and an editor produce identical
+bytes. Prettier (`.prettierrc.json`, width 100, version pinned to match the editor extension's
+bundled one) formats everything except Python; ruff (`backend/pyproject.toml`) formats Python.
+Claude Code runs both after every edit through a `PostToolUse` hook (`.claude/hooks/format.sh`),
+and `.vscode/settings.json` makes Antigravity/VS Code use the same formatters on save. Generated
+files (`lib/api/schema.d.ts`, `openapi.json`) are excluded in `.prettierignore`. The one-off
+reformat commit is listed in `.git-blame-ignore-revs`; run
+`git config blame.ignoreRevsFile .git-blame-ignore-revs` once to skip it in `git blame`.
 
 ## MCP server (read-only)
 

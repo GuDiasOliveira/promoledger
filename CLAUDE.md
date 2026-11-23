@@ -49,6 +49,7 @@ docker-compose.yml      # Local dev services (PostgreSQL 16)
 - **Testing Mandate:** **DO NOT use SQLite in-memory for testing.** SQLite lacks native PostgreSQL `TEXT[]` arrays, partial unique indexes, and native `UUID`. Run `pytest` against PostgreSQL (e.g., `promoledger_test` in Docker Compose via `TEST_DATABASE_URL`).
 - **Auth & JWT:** Use `bcrypt` or `argon2` for password hashing (`User.password_hash`). JWT payload contains `sub` (User UUID) and `exp`. RBAC is checked dynamically against `PROMOTION_MEMBER(user_id, promotion_id)`.
 - **Linting & Formatting:** `uv run ruff check .` and `uv run ruff format .`.
+- **Shared formatting (Claude Code + Antigravity):** the repo owns the format so both tools write identical bytes. A `PostToolUse` hook (`.claude/hooks/format.sh`) runs Prettier (non-Python) or `ruff format` (Python) on every file Claude edits; `.vscode/settings.json` pins the same formatters on save. Don't hand-format against it, don't add per-tool formatter config, and keep `prettier` pinned to the version bundled in the editor's Prettier extension (files outside `frontend/` are formatted by that bundled copy).
 
 ### Local Infrastructure & Verification Commands
 
@@ -88,6 +89,7 @@ docker-compose.yml      # Local dev services (PostgreSQL 16)
 - **Dev server:** `npm run dev` (backend must be running on `:8000`)
 - **Regenerate API types:** `npm run gen:api`
 - **Lint / Types / Unit tests / Build:** `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`
+- **Format:** `npm run format` / `npm run format:check` (Prettier over the whole repo, config in root `.prettierrc.json`, width 100).
 - **E2E (Playwright, production build):** `npm run test:e2e` — starts its own backend (`:8001`) and frontend (`:3001`) and recreates the `promoledger_e2e` database on every run (never `promoledger_test`).
 - **PWA icons:** edit `public/icons/icon.svg`, then `node scripts/gen-icons.mjs`.
 

@@ -1,3 +1,8 @@
 {
-  "recommendations": ["onlyutkarsh.mermaid-diagram-lens"]
+  "recommendations": [
+    "onlyutkarsh.mermaid-diagram-lens",
+    "esbenp.prettier-vscode",
+    "charliermarsh.ruff",
+    "editorconfig.editorconfig"
+  ]
 }
