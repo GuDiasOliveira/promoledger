@@ -375,7 +375,7 @@ correctness is checked by machines rather than by eye:
   app/core        config, security, database     app/schemas   Pydantic v2 schemas
   app/services    business logic & transitions   scripts/      seed.py
 /frontend         Next.js 16 App Router, TypeScript, Tailwind, Dexie, TanStack Query
-  screenshots/    capture specs behind `npm run screenshots`
+  screenshots/    capture specs behind npm run screenshots
 /docs             the specs: prd.md, erm.md, api.md; screenshots/ holds the README images
 CLAUDE.md         conventions, invariants and known traps for AI coding agents
 ```
