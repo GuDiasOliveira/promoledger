@@ -2,7 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import type { TransitionKind } from "@/lib/db";
 
-import { applyAction, canApply, classify, isSatisfied, type OrderState, planReapply } from "./state";
+import {
+  applyAction,
+  canApply,
+  classify,
+  isSatisfied,
+  type OrderState,
+  planReapply,
+} from "./state";
 
 const T = "2026-03-30T12:00:00Z";
 const base: OrderState = { version: 1, paidAt: null, deliveredAt: null, cancelledAt: null };
@@ -19,7 +26,13 @@ describe("canApply mirrors the server transition rules", () => {
     ["settled", settled, ["REVOKE_PAYMENT", "REVOKE_DELIVERY"]],
     ["cancelled", cancelled, []],
   ])("%s", (_, state, allowed) => {
-    const all: TransitionKind[] = ["MARK_PAID", "REVOKE_PAYMENT", "MARK_DELIVERED", "REVOKE_DELIVERY", "CANCEL"];
+    const all: TransitionKind[] = [
+      "MARK_PAID",
+      "REVOKE_PAYMENT",
+      "MARK_DELIVERED",
+      "REVOKE_DELIVERY",
+      "CANCEL",
+    ];
     expect(all.filter((k) => canApply(state, k))).toEqual(allowed);
   });
 });

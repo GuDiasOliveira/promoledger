@@ -58,7 +58,10 @@ export async function refreshCatalog(
   for (let pageNumber = 1; ; pageNumber += 1) {
     const page = await unwrap(
       api.GET("/api/v1/promotions/{promotion_id}/products", {
-        params: { path: { promotion_id: promotionId }, query: { page: pageNumber, size: PAGE_SIZE } },
+        params: {
+          path: { promotion_id: promotionId },
+          query: { page: pageNumber, size: PAGE_SIZE },
+        },
       }),
     );
     for (const p of page.items) {
@@ -90,7 +93,10 @@ export async function refreshCustomers(
   for (let pageNumber = 1; pageNumber <= MAX_CUSTOMER_PAGES; pageNumber += 1) {
     const page = await unwrap(
       api.GET("/api/v1/promotions/{promotion_id}/customers", {
-        params: { path: { promotion_id: promotionId }, query: { page: pageNumber, size: PAGE_SIZE } },
+        params: {
+          path: { promotion_id: promotionId },
+          query: { page: pageNumber, size: PAGE_SIZE },
+        },
       }),
     );
     for (const c of page.items) {
@@ -125,7 +131,10 @@ export async function refreshOrders(
   for (let pageNumber = 1; pageNumber <= MAX_ORDER_PAGES; pageNumber += 1) {
     const page = await unwrap(
       api.GET("/api/v1/promotions/{promotion_id}/orders", {
-        params: { path: { promotion_id: promotionId }, query: { page: pageNumber, size: PAGE_SIZE } },
+        params: {
+          path: { promotion_id: promotionId },
+          query: { page: pageNumber, size: PAGE_SIZE },
+        },
       }),
     );
     serverOrders.push(...page.items);
@@ -139,7 +148,10 @@ export async function refreshOrders(
       const snapshot = snapshotFromServer(order);
       if (existing) {
         if (order.version >= existing.version) {
-          await db.orders.update(existing.key, { ...snapshot, lines: mergeLines(existing, snapshot) });
+          await db.orders.update(existing.key, {
+            ...snapshot,
+            lines: mergeLines(existing, snapshot),
+          });
         }
         continue;
       }
@@ -159,7 +171,12 @@ export async function refreshOrders(
 }
 
 /** Fetch one order with its audit history (online), storing it as the latest snapshot. */
-export async function fetchOrderDetail(db: PromoLedgerDB, key: string, promotionId: string, serverId: string) {
+export async function fetchOrderDetail(
+  db: PromoLedgerDB,
+  key: string,
+  promotionId: string,
+  serverId: string,
+) {
   const order = await unwrap(
     api.GET("/api/v1/promotions/{promotion_id}/orders/{order_id}", {
       params: { path: { promotion_id: promotionId, order_id: serverId } },

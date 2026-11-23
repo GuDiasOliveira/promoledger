@@ -30,7 +30,10 @@ async function call<T>(
 
 export async function createAccount(label: string): Promise<Account> {
   const email = `e2e-${label}-${crypto.randomUUID()}@example.com`;
-  await call("/auth/register", { method: "POST", body: { name: `E2E ${label}`, email, password: PASSWORD } });
+  await call("/auth/register", {
+    method: "POST",
+    body: { name: `E2E ${label}`, email, password: PASSWORD },
+  });
   const { access_token } = await call<{ access_token: string }>("/auth/token", {
     method: "POST",
     body: { email, password: PASSWORD },
@@ -104,7 +107,8 @@ export async function seedScenario(): Promise<Scenario> {
     addSeller,
     addMember,
     orders: async () =>
-      (await call<{ items: ServerOrder[] }>(`${base}/orders?size=100`, { token: admin.token })).items,
+      (await call<{ items: ServerOrder[] }>(`${base}/orders?size=100`, { token: admin.token }))
+        .items,
   };
 }
 
@@ -134,7 +138,9 @@ export async function expectNoHorizontalOverflow(page: Page) {
     }
     return { limit, ...worst };
   });
-  expect(widest.right, `overflowing element: ${widest.element}`).toBeLessThanOrEqual(widest.limit + 0.5);
+  expect(widest.right, `overflowing element: ${widest.element}`).toBeLessThanOrEqual(
+    widest.limit + 0.5,
+  );
 }
 
 /**
@@ -182,7 +188,8 @@ export async function fillOrderWithNewCustomer(page: Page, customerName: string)
   await page.getByLabel("Search by name or contact").fill(customerName);
   await page.getByRole("button", { name: "+ New customer" }).click();
   await page.getByRole("button", { name: "Add customer" }).click();
-  for (let i = 0; i < 2; i += 1) await page.getByRole("button", { name: "Add one Chocolate Egg" }).click();
+  for (let i = 0; i < 2; i += 1)
+    await page.getByRole("button", { name: "Add one Chocolate Egg" }).click();
   for (let i = 0; i < 3; i += 1) await page.getByRole("button", { name: "Add one Bonbon" }).click();
 }
 
@@ -261,7 +268,9 @@ export async function summaryFromApi(s: Scenario) {
 }
 
 export async function serverOrder(s: Scenario, orderId: string): Promise<ServerOrderDetail> {
-  return call<ServerOrderDetail>(`/promotions/${s.promotionId}/orders/${orderId}`, { token: s.admin.token });
+  return call<ServerOrderDetail>(`/promotions/${s.promotionId}/orders/${orderId}`, {
+    token: s.admin.token,
+  });
 }
 
 /** Open "My orders" and then the order of `customerName`. */

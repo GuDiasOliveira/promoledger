@@ -181,8 +181,13 @@ export async function discardOutboxItem(db: PromoLedgerDB, item: OutboxItem): Pr
     // actions on the same order were chained on a version that will now never exist.
     for (const other of queue) {
       const sameOrderChain =
-        item.kind === "transition" && other.kind === "transition" && other.localRef === item.localRef;
-      if (other.seq! > item.seq! && (sameOrderChain || (other.deps ?? []).some((d) => dropped.has(d)))) {
+        item.kind === "transition" &&
+        other.kind === "transition" &&
+        other.localRef === item.localRef;
+      if (
+        other.seq! > item.seq! &&
+        (sameOrderChain || (other.deps ?? []).some((d) => dropped.has(d)))
+      ) {
         toDelete.push(other);
         if (other.kind !== "transition") dropped.add(other.localRef);
       }

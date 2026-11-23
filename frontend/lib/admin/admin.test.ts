@@ -17,7 +17,9 @@ describe("order filters in the URL", () => {
       page: 3,
     };
     const query = orderFiltersQuery(PROMO, filters);
-    expect(query).toBe(`id=${PROMO}&status=DIVERGENCE&seller=${SELLER}&customer=${SELLER}&customerName=Ana+Souza&page=3`);
+    expect(query).toBe(
+      `id=${PROMO}&status=DIVERGENCE&seller=${SELLER}&customer=${SELLER}&customerName=Ana+Souza&page=3`,
+    );
     expect(parseOrderFilters(new URLSearchParams(query))).toEqual(filters);
   });
 
@@ -37,7 +39,13 @@ describe("order filters in the URL", () => {
   it("maps to the API query (omitting empty filters)", () => {
     expect(
       orderFiltersToApi(
-        { classification: null, sellerMemberId: SELLER, customerId: null, customerName: null, page: 2 },
+        {
+          classification: null,
+          sellerMemberId: SELLER,
+          customerId: null,
+          customerName: null,
+          page: 2,
+        },
         20,
       ),
     ).toEqual({
@@ -47,7 +55,12 @@ describe("order filters in the URL", () => {
     });
   });
 
-  it.each([[0, 1], [20, 1], [21, 2], [100, 5]])("totalPages(%i) = %i", (total, pages) => {
+  it.each([
+    [0, 1],
+    [20, 1],
+    [21, 2],
+    [100, 5],
+  ])("totalPages(%i) = %i", (total, pages) => {
     expect(totalPages(total, 20)).toBe(pages);
   });
 });

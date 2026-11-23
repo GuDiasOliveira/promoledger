@@ -20,7 +20,11 @@ export function useSummary(promotionId: string) {
   return useQuery({
     queryKey: ["admin", promotionId, "summary"],
     queryFn: () =>
-      unwrap(api.GET("/api/v1/promotions/{promotion_id}/reconciliation/summary", { params: { path: path(promotionId) } })),
+      unwrap(
+        api.GET("/api/v1/promotions/{promotion_id}/reconciliation/summary", {
+          params: { path: path(promotionId) },
+        }),
+      ),
   });
 }
 
@@ -28,7 +32,11 @@ export function useLeaderboard(promotionId: string) {
   return useQuery({
     queryKey: ["admin", promotionId, "leaderboard"],
     queryFn: () =>
-      unwrap(api.GET("/api/v1/promotions/{promotion_id}/reconciliation/leaderboard", { params: { path: path(promotionId) } })),
+      unwrap(
+        api.GET("/api/v1/promotions/{promotion_id}/reconciliation/leaderboard", {
+          params: { path: path(promotionId) },
+        }),
+      ),
   });
 }
 

@@ -10,7 +10,9 @@ const callWith = (token: string, method = "GET", path = "/auth/me") =>
     body: method === "GET" ? undefined : JSON.stringify({ name: "write attempt" }),
   });
 
-test("a read-only API token is shown once, works for reading only, and can be revoked", async ({ page }) => {
+test("a read-only API token is shown once, works for reading only, and can be revoked", async ({
+  page,
+}) => {
   const account = await createAccount("tokens");
   await logInViaUi(page, account);
   await page.getByRole("link", { name: "API tokens" }).click();

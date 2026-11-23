@@ -87,7 +87,9 @@ function PromotionHome({ userId, promotion: p }: PromotionScope) {
             className="flex min-h-14 items-center justify-center gap-2 rounded-xl border border-zinc-300 px-4 font-medium dark:border-zinc-700"
           >
             {t("promotion.outbox")}
-            {pending > 0 ? <Badge tone="amber">{t("common.pending", { count: pending })}</Badge> : null}
+            {pending > 0 ? (
+              <Badge tone="amber">{t("common.pending", { count: pending })}</Badge>
+            ) : null}
           </Link>
         </div>
       ) : null}

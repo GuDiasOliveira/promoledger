@@ -4,7 +4,12 @@ import { useLiveQuery } from "dexie-react-hooks";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 
-import { orderHref, type PromotionScope, promotionHref, WithPromotion } from "@/components/promotion-scope";
+import {
+  orderHref,
+  type PromotionScope,
+  promotionHref,
+  WithPromotion,
+} from "@/components/promotion-scope";
 import { Badge, Button, Card } from "@/components/ui";
 import { ApiError } from "@/lib/api/errors";
 import { db, type OutboxItem } from "@/lib/db";
@@ -52,10 +57,14 @@ function OutboxRow({ item, held }: { item: OutboxItem; held: boolean }) {
         <Badge tone={STATUS_TONE[item.status]}>{t(`status.${item.status}`)}</Badge>
       </div>
       {item.lastError ? (
-        <p className="text-sm text-red-700 dark:text-red-400">{errorMessage(new ApiError(item.lastError))}</p>
+        <p className="text-sm text-red-700 dark:text-red-400">
+          {errorMessage(new ApiError(item.lastError))}
+        </p>
       ) : null}
       {held ? <p className="text-sm text-zinc-600 dark:text-zinc-400">{t("held")}</p> : null}
-      {item.attempts > 0 ? <p className="text-xs text-zinc-500">{t("attempts", { count: item.attempts })}</p> : null}
+      {item.attempts > 0 ? (
+        <p className="text-xs text-zinc-500">{t("attempts", { count: item.attempts })}</p>
+      ) : null}
       <div className="flex gap-2">
         {item.kind === "transition" && item.status !== "pending" ? (
           // A rejected action is stale (version/state changed): resolve it on the order screen.

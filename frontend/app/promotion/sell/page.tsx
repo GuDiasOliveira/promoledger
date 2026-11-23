@@ -15,7 +15,11 @@ import { requestSync } from "@/lib/sync/runner";
 const MAX_QUANTITY = 1000;
 
 /** Case- and accent-insensitive matching ("joao" finds "João"). */
-const fold = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+const fold = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
 
 function CustomerPicker({
   scope,
@@ -54,8 +58,18 @@ function CustomerPicker({
   if (creating) {
     return (
       <form onSubmit={create} className="space-y-3">
-        <Field label={t("customerName")} value={name} onChange={(e) => setName(e.target.value)} required autoFocus />
-        <Field label={t("customerContact")} value={contact} onChange={(e) => setContact(e.target.value)} />
+        <Field
+          label={t("customerName")}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          autoFocus
+        />
+        <Field
+          label={t("customerContact")}
+          value={contact}
+          onChange={(e) => setContact(e.target.value)}
+        />
         <div className="flex gap-2">
           <Button type="submit" disabled={!name.trim()}>
             {t("addCustomer")}
@@ -70,7 +84,12 @@ function CustomerPicker({
 
   return (
     <div className="space-y-3">
-      <Field label={t("searchCustomer")} value={query} onChange={(e) => setQuery(e.target.value)} type="search" />
+      <Field
+        label={t("searchCustomer")}
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        type="search"
+      />
       {matches.length === 0 ? <p className="text-sm text-zinc-500">{t("noCustomers")}</p> : null}
       <ul className="space-y-1">
         {matches.map((c) => (
@@ -113,7 +132,12 @@ function SellForm(scope: PromotionScope) {
   const money = (cents: bigint) => formatMoney(cents, promotion.currency, locale);
   const lines = (products ?? [])
     .filter((p) => (quantities[p.id] ?? 0) > 0)
-    .map((p) => ({ productId: p.id, name: p.name, quantity: quantities[p.id], unitPrice: p.price }));
+    .map((p) => ({
+      productId: p.id,
+      name: p.name,
+      quantity: quantities[p.id],
+      unitPrice: p.price,
+    }));
   const total = sumMoney(lines.map((l) => lineTotal(parseMoney(l.unitPrice), l.quantity)));
 
   const change = (productId: string, delta: number) =>
@@ -146,7 +170,10 @@ function SellForm(scope: PromotionScope) {
   if (saved) {
     return (
       <Card>
-        <p role="status" className="mb-4 text-lg font-medium text-emerald-700 dark:text-emerald-400">
+        <p
+          role="status"
+          className="mb-4 text-lg font-medium text-emerald-700 dark:text-emerald-400"
+        >
           ✓ {t("sell.saved")}
         </p>
         <div className="flex flex-col gap-2">
@@ -172,7 +199,10 @@ function SellForm(scope: PromotionScope) {
         {customer ? (
           <div className="flex items-center justify-between gap-2">
             <span className="font-medium">
-              {customer.name} {customer.sync !== "synced" ? <Badge tone="amber">{t("sync.status.pending")}</Badge> : null}
+              {customer.name}{" "}
+              {customer.sync !== "synced" ? (
+                <Badge tone="amber">{t("sync.status.pending")}</Badge>
+              ) : null}
             </span>
             <Button variant="ghost" onClick={() => setCustomer(null)}>
               {t("sell.changeCustomer")}
@@ -185,7 +215,9 @@ function SellForm(scope: PromotionScope) {
 
       <Card>
         <h2 className="mb-3 font-semibold">{t("sell.products")}</h2>
-        {products && products.length === 0 ? <p className="text-sm text-zinc-500">{t("sell.noProducts")}</p> : null}
+        {products && products.length === 0 ? (
+          <p className="text-sm text-zinc-500">{t("sell.noProducts")}</p>
+        ) : null}
         <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
           {(products ?? []).map((p) => {
             const qty = quantities[p.id] ?? 0;
@@ -242,7 +274,11 @@ function SellForm(scope: PromotionScope) {
             />
             {t("sell.markPaidNow")}
           </label>
-          <Button onClick={save} disabled={!customer || lines.length === 0} className="w-full text-lg">
+          <Button
+            onClick={save}
+            disabled={!customer || lines.length === 0}
+            className="w-full text-lg"
+          >
             {t("sell.save")}
           </Button>
         </div>

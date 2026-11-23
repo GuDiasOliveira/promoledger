@@ -31,7 +31,14 @@ claude mcp add promoledger \
   "mcpServers": {
     "promoledger": {
       "command": "uv",
-      "args": ["run", "--directory", "/ABSOLUTE/PATH/TO/promoledger/backend", "python", "-m", "app.mcp"],
+      "args": [
+        "run",
+        "--directory",
+        "/ABSOLUTE/PATH/TO/promoledger/backend",
+        "python",
+        "-m",
+        "app.mcp"
+      ],
       "env": {
         "PROMOLEDGER_API_URL": "http://localhost:8000",
         "PROMOLEDGER_TOKEN": "pl_your_token"
@@ -43,13 +50,13 @@ claude mcp add promoledger \
 
 ## Tools
 
-| Tool | Returns | Role needed |
-|---|---|---|
-| `list_promotions()` | Your promotions, currency, dates, your roles | any member |
-| `promotion_health(promotion_id)` | Revenue, collected, outstanding, collection rate, units, divergences, sales window, days to delivery | admin or viewer |
-| `seller_ranking(promotion_id, limit=10)` | Sellers by gross revenue, settlement % | admin or viewer |
-| `divergence_alerts(promotion_id)` | Delivered-but-unpaid orders (id, short ref, seller, amount, days outstanding) | admin or viewer |
-| `sales_velocity(promotion_id, days=7)` | Orders and revenue per day (UTC), cancelled excluded | any member (sellers: own orders) |
+| Tool                                     | Returns                                                                                              | Role needed                      |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------- |
+| `list_promotions()`                      | Your promotions, currency, dates, your roles                                                         | any member                       |
+| `promotion_health(promotion_id)`         | Revenue, collected, outstanding, collection rate, units, divergences, sales window, days to delivery | admin or viewer                  |
+| `seller_ranking(promotion_id, limit=10)` | Sellers by gross revenue, settlement %                                                               | admin or viewer                  |
+| `divergence_alerts(promotion_id)`        | Delivered-but-unpaid orders (id, short ref, seller, amount, days outstanding)                        | admin or viewer                  |
+| `sales_velocity(promotion_id, days=7)`   | Orders and revenue per day (UTC), cancelled excluded                                                 | any member (sellers: own orders) |
 
 Amounts are exact decimal strings in the promotion's currency.
 

@@ -21,7 +21,10 @@ export default function globalSetup() {
     "    await conn.close()",
     "asyncio.run(main(sys.argv[1], sys.argv[2]))",
   ].join("\n");
-  execFileSync("uv", ["run", "python", "-c", recreate, adminUrl, dbName], { cwd: backend, stdio: "inherit" });
+  execFileSync("uv", ["run", "python", "-c", recreate, adminUrl, dbName], {
+    cwd: backend,
+    stdio: "inherit",
+  });
   execFileSync("uv", ["run", "alembic", "upgrade", "head"], {
     cwd: backend,
     stdio: "inherit",

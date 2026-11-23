@@ -12,7 +12,11 @@ import {
   waitUntilOfflineReady,
 } from "./helpers";
 
-const status = (page: Page) => page.locator("main").getByText(/^(Unpaid|Paid · to deliver|Delivered · unpaid|Settled|Cancelled)$/).first();
+const status = (page: Page) =>
+  page
+    .locator("main")
+    .getByText(/^(Unpaid|Paid · to deliver|Delivered · unpaid|Settled|Cancelled)$/)
+    .first();
 
 test("actions chained offline on an order that was never sent reach the server in order", async ({
   page,
@@ -45,7 +49,10 @@ test("actions chained offline on an order that was never sent reach the server i
   const order = await serverOrder(s, summary.id);
   expect(order.status_classification).toBe("SETTLED");
   expect(order.version).toBe(3);
-  expect(order.audit_events.map((e) => e.event_type)).toEqual(["PAYMENT_MARKED", "DELIVERY_MARKED"]);
+  expect(order.audit_events.map((e) => e.event_type)).toEqual([
+    "PAYMENT_MARKED",
+    "DELIVERY_MARKED",
+  ]);
 });
 
 test("conflict: someone paid meanwhile -> 'Reapply my actions' rebases the delivery", async ({
@@ -78,13 +85,18 @@ test("conflict: someone paid meanwhile -> 'Reapply my actions' rebases the deliv
   await expect.poll(async () => (await serverOrder(s, orderId)).version).toBe(3);
   const order = await serverOrder(s, orderId);
   expect(order.status_classification).toBe("SETTLED");
-  expect(order.audit_events.map((e) => [e.event_type, e.actor_member_id === s.sellerMemberId])).toEqual([
+  expect(
+    order.audit_events.map((e) => [e.event_type, e.actor_member_id === s.sellerMemberId]),
+  ).toEqual([
     ["PAYMENT_MARKED", false], // the admin
     ["DELIVERY_MARKED", true], // the seller's reapplied action
   ]);
 });
 
-test("conflict: someone already did the same thing -> nothing to apply", async ({ page, context }) => {
+test("conflict: someone already did the same thing -> nothing to apply", async ({
+  page,
+  context,
+}) => {
   const s = await seedScenario();
   const orderId = await createOrderAsSeller(s, "Same Change");
   await logInViaUi(page, s.seller);
@@ -108,7 +120,9 @@ test("conflict: someone already did the same thing -> nothing to apply", async (
   expect(order.audit_events.map((e) => e.event_type)).toEqual(["DELIVERY_MARKED"]);
 });
 
-test("revoking a payment requires a reason, which is recorded in the audit trail", async ({ page }) => {
+test("revoking a payment requires a reason, which is recorded in the audit trail", async ({
+  page,
+}) => {
   const s = await seedScenario();
   const orderId = await createOrderAsSeller(s, "Needs Reason", { markPaidNow: true });
   await logInViaUi(page, s.seller);
@@ -126,5 +140,8 @@ test("revoking a payment requires a reason, which is recorded in the audit trail
   await expect(status(page)).toHaveText("Unpaid");
   await expect.poll(async () => (await serverOrder(s, orderId)).version).toBe(2);
   const order = await serverOrder(s, orderId);
-  expect(order.audit_events.at(-1)).toMatchObject({ event_type: "PAYMENT_REVOKED", reason: "Transfer bounced" });
+  expect(order.audit_events.at(-1)).toMatchObject({
+    event_type: "PAYMENT_REVOKED",
+    reason: "Transfer bounced",
+  });
 });

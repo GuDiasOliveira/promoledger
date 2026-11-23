@@ -43,10 +43,23 @@ function ProductForm({
     onSubmit({ name: name.trim(), description: description.trim() || null, price: parsed.value });
   };
   return (
-    <form onSubmit={submit} className="grid grid-cols-1 gap-3 md:grid-cols-3" aria-label={submitLabel}>
-      <Field label={t("products.name")} value={name} onChange={(e) => setName(e.target.value)} required />
+    <form
+      onSubmit={submit}
+      className="grid grid-cols-1 gap-3 md:grid-cols-3"
+      aria-label={submitLabel}
+    >
+      <Field
+        label={t("products.name")}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        required
+      />
       <MoneyField value={price} onChange={setPrice} currency={currency} />
-      <Field label={t("products.description")} value={description} onChange={(e) => setDescription(e.target.value)} />
+      <Field
+        label={t("products.description")}
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+      />
       <div className="flex gap-2 md:col-span-3">
         <Button type="submit" disabled={!parsed.ok || !name.trim() || pending}>
           {submitLabel}
@@ -73,7 +86,10 @@ function Products({ promotion }: AdminScope) {
     queryFn: () =>
       unwrap(
         api.GET("/api/v1/promotions/{promotion_id}/products", {
-          params: { path: { promotion_id: promotion.id }, query: { include_inactive: true, page: 1, size: 100 } },
+          params: {
+            path: { promotion_id: promotion.id },
+            query: { include_inactive: true, page: 1, size: 100 },
+          },
         }),
       ),
   });
@@ -143,18 +159,28 @@ function Products({ promotion }: AdminScope) {
                 ) : (
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <span className={`font-medium ${p.is_active ? "" : "text-zinc-400 line-through"}`}>{p.name}</span>{" "}
+                      <span
+                        className={`font-medium ${p.is_active ? "" : "text-zinc-400 line-through"}`}
+                      >
+                        {p.name}
+                      </span>{" "}
                       {!p.is_active ? <Badge>{t("products.archived")}</Badge> : null}
-                      {p.description ? <p className="text-sm text-zinc-500">{p.description}</p> : null}
+                      {p.description ? (
+                        <p className="text-sm text-zinc-500">{p.description}</p>
+                      ) : null}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="tabular-nums">{formatMoney(parseMoney(p.price), promotion.currency, locale)}</span>
+                      <span className="tabular-nums">
+                        {formatMoney(parseMoney(p.price), promotion.currency, locale)}
+                      </span>
                       <Button variant="ghost" onClick={() => setEditing(p.id)}>
                         {t("products.edit")}
                       </Button>
                       <Button
                         variant="ghost"
-                        onClick={() => update.mutate({ id: p.id, body: { is_active: !p.is_active } })}
+                        onClick={() =>
+                          update.mutate({ id: p.id, body: { is_active: !p.is_active } })
+                        }
                       >
                         {p.is_active ? t("products.archive") : t("products.restore")}
                       </Button>

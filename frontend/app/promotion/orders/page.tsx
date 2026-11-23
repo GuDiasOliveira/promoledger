@@ -5,7 +5,12 @@ import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
 import { ClassificationBadge } from "@/components/order-ui";
-import { orderHref, type PromotionScope, promotionHref, WithPromotion } from "@/components/promotion-scope";
+import {
+  orderHref,
+  type PromotionScope,
+  promotionHref,
+  WithPromotion,
+} from "@/components/promotion-scope";
 import { Badge, Card, Field } from "@/components/ui";
 import { formatDateTime } from "@/lib/format";
 import { formatMoney } from "@/lib/money";
@@ -22,9 +27,21 @@ const TABS = {
 } as const;
 type Tab = keyof typeof TABS;
 
-const fold = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
+const fold = (s: string) =>
+  s
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
 
-function OrderCard({ derived, promotionId, currency }: { derived: DerivedOrder; promotionId: string; currency: string }) {
+function OrderCard({
+  derived,
+  promotionId,
+  currency,
+}: {
+  derived: DerivedOrder;
+  promotionId: string;
+  currency: string;
+}) {
   const t = useTranslations("orders");
   const locale = useLocale();
   const { order } = derived;
@@ -38,7 +55,9 @@ function OrderCard({ derived, promotionId, currency }: { derived: DerivedOrder; 
       >
         <div className="flex items-start justify-between gap-2">
           <span className="font-medium">{order.customerName}</span>
-          <span className="tabular-nums font-semibold">{formatMoney(orderTotalCents(derived), currency, locale)}</span>
+          <span className="tabular-nums font-semibold">
+            {formatMoney(orderTotalCents(derived), currency, locale)}
+          </span>
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-1 text-xs text-zinc-500">
           <ClassificationBadge value={classify(derived.state)} />
@@ -81,14 +100,21 @@ function OrdersList({ userId, promotion }: PromotionScope) {
             aria-selected={tab === key}
             onClick={() => setTab(key)}
             className={`min-h-11 shrink-0 rounded-full px-4 text-sm font-medium ${
-              tab === key ? "bg-indigo-600 text-white" : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+              tab === key
+                ? "bg-indigo-600 text-white"
+                : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
             }`}
           >
             {t(`orders.tabs.${key}`)}
           </button>
         ))}
       </div>
-      <Field label={t("orders.search")} type="search" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <Field
+        label={t("orders.search")}
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
       {orders === undefined ? (
         <p>{t("common.loading")}</p>
       ) : visible.length === 0 ? (
@@ -98,7 +124,12 @@ function OrdersList({ userId, promotion }: PromotionScope) {
       ) : (
         <ul className="space-y-2">
           {visible.map((d) => (
-            <OrderCard key={d.order.key} derived={d} promotionId={promotion.id} currency={promotion.currency} />
+            <OrderCard
+              key={d.order.key}
+              derived={d}
+              promotionId={promotion.id}
+              currency={promotion.currency}
+            />
           ))}
         </ul>
       )}

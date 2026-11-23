@@ -11,7 +11,13 @@ import { PAGE_SIZE, useAuditEvents, useMemberNames } from "@/lib/admin/queries";
 import { formatDateTime } from "@/lib/format";
 import { useErrorMessage } from "@/lib/hooks";
 
-const EVENT_TYPES = ["PAYMENT_MARKED", "PAYMENT_REVOKED", "DELIVERY_MARKED", "DELIVERY_REVOKED", "ORDER_CANCELLED"] as const;
+const EVENT_TYPES = [
+  "PAYMENT_MARKED",
+  "PAYMENT_REVOKED",
+  "DELIVERY_MARKED",
+  "DELIVERY_REVOKED",
+  "ORDER_CANCELLED",
+] as const;
 
 function Audit({ promotion }: AdminScope) {
   const t = useTranslations();
@@ -66,7 +72,10 @@ function Audit({ promotion }: AdminScope) {
                     <td>{names.data?.get(e.actor_member_id) ?? "…"}</td>
                     <td className="text-zinc-600 dark:text-zinc-400">{e.reason ?? "—"}</td>
                     <td>
-                      <Link href={adminOrderHref(promotion.id, e.order_id)} className="text-indigo-600">
+                      <Link
+                        href={adminOrderHref(promotion.id, e.order_id)}
+                        className="text-indigo-600"
+                      >
                         {t("admin.order.open")}
                       </Link>
                     </td>

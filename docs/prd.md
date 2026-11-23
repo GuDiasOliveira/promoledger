@@ -133,7 +133,7 @@ This PRD proposes a software application to address these promotion frictions by
 - **Markets:** Brazil, the United States and Europe.
 - **UI languages:** `en-US` (default), `pt-BR`, `es-ES`. Numbers, dates and amounts are formatted with the viewer's locale and time zone; the API stays locale-neutral (UTC timestamps, ISO dates, decimal strings).
 - **Currencies:** one ISO 4217 currency per promotion, from a 2-decimal allowlist (`BRL`, `USD`, `EUR`, `GBP`, `CHF`, `SEK`, `NOK`, `DKK`, `PLN`, `CZK`).
-- **Payment-method neutral:** the product records *that* an order was paid (`paid_at`), never *how*; the UI must not assume region-specific methods (e.g. Pix).
+- **Payment-method neutral:** the product records _that_ an order was paid (`paid_at`), never _how_; the UI must not assume region-specific methods (e.g. Pix).
 
 ## Post-MVP Backlog
 

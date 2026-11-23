@@ -53,7 +53,12 @@ function ActionButtons({ derived }: { derived: Derived }) {
     return (
       <form onSubmit={submit} className="space-y-3" aria-label={t(`actions.${reasonFor}`)}>
         <p className="font-medium">{t(`actions.${reasonFor}`)}</p>
-        <Field label={t("reason")} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />
+        <Field
+          label={t("reason")}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          autoFocus
+        />
         <div className="flex gap-2">
           <Button type="submit" disabled={!reason.trim()}>
             {t("confirm")}
@@ -147,7 +152,8 @@ function ConflictResolution({ derived, promotionId }: { derived: Derived; promot
         ) : (
           <>
             <div className="flex items-center gap-2 text-sm">
-              <span className="font-medium">{t("conflict.server")}:</span> {stateSummary(serverState)}
+              <span className="font-medium">{t("conflict.server")}:</span>{" "}
+              {stateSummary(serverState)}
             </div>
             {plan!.apply.length === 0 ? (
               <p className="font-medium" data-testid="nothing-to-apply">
@@ -155,10 +161,14 @@ function ConflictResolution({ derived, promotionId }: { derived: Derived; promot
               </p>
             ) : null}
             {plan!.notApplicable.length > 0 ? (
-              <p className="text-sm text-zinc-600">{t("conflict.willSkip", { count: plan!.notApplicable.length })}</p>
+              <p className="text-sm text-zinc-600">
+                {t("conflict.willSkip", { count: plan!.notApplicable.length })}
+              </p>
             ) : null}
             <div className="flex flex-col gap-2 sm:flex-row">
-              {plan!.apply.length > 0 ? <Button onClick={reapply}>{t("conflict.reapply")}</Button> : null}
+              {plan!.apply.length > 0 ? (
+                <Button onClick={reapply}>{t("conflict.reapply")}</Button>
+              ) : null}
               <Button variant={plan!.apply.length > 0 ? "ghost" : "primary"} onClick={discard}>
                 {plan!.apply.length > 0 ? t("conflict.discard") : t("conflict.ok")}
               </Button>
@@ -233,16 +243,21 @@ function OrderDetail({ userId, promotion }: PromotionScope) {
 
   const { order, state } = derived;
   const money = (cents: bigint) => formatMoney(cents, promotion.currency, locale);
-  const productName = (id: string, name: string) => name || products?.find((p) => p.id === id)?.name || "—";
+  const productName = (id: string, name: string) =>
+    name || products?.find((p) => p.id === id)?.name || "—";
   const creationRejected = order.sync === "failed" || order.sync === "conflict";
-  const queued = derived.actions.filter((a) => a.status === "pending").length + (order.sync === "pending" ? 1 : 0);
+  const queued =
+    derived.actions.filter((a) => a.status === "pending").length +
+    (order.sync === "pending" ? 1 : 0);
 
   return (
     <div className="space-y-4 pb-8">
       {back}
       <Card>
         <div className="flex items-start justify-between gap-2">
-          <h1 className="text-xl font-semibold">{t("order.title", { name: order.customerName })}</h1>
+          <h1 className="text-xl font-semibold">
+            {t("order.title", { name: order.customerName })}
+          </h1>
           {stateSummary(state)}
         </div>
         <p className="mt-1 text-sm text-zinc-500">
@@ -260,7 +275,9 @@ function OrderDetail({ userId, promotion }: PromotionScope) {
               <span>
                 {line.quantity} × {productName(line.productId, line.name)}
               </span>
-              <span className="tabular-nums">{money(lineTotal(parseMoney(line.unitPrice), line.quantity))}</span>
+              <span className="tabular-nums">
+                {money(lineTotal(parseMoney(line.unitPrice), line.quantity))}
+              </span>
             </li>
           ))}
         </ul>

@@ -22,10 +22,10 @@ This document specifies the RESTful API design conventions, HTTP status codes, h
 
 ### 1.3 Standard Headers
 
-| Header            | Type     | Description                                                                                          | Mandatory On                                                                               |
-| :---------------- | :------- | :--------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------- |
-| `Authorization`   | `string` | Standard Bearer JWT: `Bearer <token>`.                                                               | All protected endpoints.                                                                   |
-| `Idempotency-Key` | `UUIDv4` | Unique client-generated key preventing duplicate submissions upon network retries.                   | `POST /promotions/{id}/orders` and state transitions (`/payment`, `/delivery`, `/cancel`). |
+| Header            | Type     | Description                                                                                                                                                              | Mandatory On                                                                               |
+| :---------------- | :------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------- |
+| `Authorization`   | `string` | Standard Bearer JWT: `Bearer <token>`.                                                                                                                                   | All protected endpoints.                                                                   |
+| `Idempotency-Key` | `UUIDv4` | Unique client-generated key preventing duplicate submissions upon network retries.                                                                                       | `POST /promotions/{id}/orders` and state transitions (`/payment`, `/delivery`, `/cancel`). |
 | `If-Match`        | `string` | Optional HTTP concurrency header containing the entity `version`. (Alternatively passed in payload). **Not supported in the MVP** — send `expected_version` in the body. | State transition endpoints.                                                                |
 
 ### 1.4 Pagination Standard
@@ -76,33 +76,33 @@ Standard Status Codes:
 
 ## 1.6 Operational Endpoints
 
-| Method | Endpoint         | Min Role | Description                                                                                                                  |
-| :----- | :--------------- | :------- | :--------------------------------------------------------------------------------------------------------------------------- |
+| Method | Endpoint         | Min Role | Description                                                                                                                                              |
+| :----- | :--------------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `GET`  | `/api/v1/health` | Public   | Liveness & database readiness probe (`SELECT 1`). Returns `200 {"status":"ok","database":"ok"}` or `503 {"status":"degraded","database":"unavailable"}`. |
 
 ---
 
 ## 2. Authentication & User Profile (`/auth`)
 
-| Method | Endpoint                | Min Role      | Description                                                                              |
-| :----- | :---------------------- | :------------ | :--------------------------------------------------------------------------------------- |
-| `POST` | `/api/v1/auth/register` | Public        | Register a new user account (`name`, `email`, `password`). Returns created user profile. |
-| `POST` | `/api/v1/auth/token`    | Public        | Authenticate user via email/credentials; returns JWT access token.                       |
-| `POST` | `/api/v1/auth/tokens`   | Signed in (not a token) | Create a read-only personal access token `{name, expires_in_days (1–365, default 90)}` → `201` with the plain `token` **once**. |
-| `GET`  | `/api/v1/auth/tokens`   | Signed in (not a token) | List the caller's tokens (never the plain token). |
-| `DELETE` | `/api/v1/auth/tokens/{token_id}` | Signed in (not a token) | Revoke (soft, idempotent) → `204`. |
-| `GET`  | `/api/v1/auth/me`       | Authenticated | Retrieve current user profile and list of active `PromotionMember` campaigns (`memberships[]`: `member_id`, `promotion_id`, `promotion_name`, `promotion_status`, `roles`). |
+| Method   | Endpoint                         | Min Role                | Description                                                                                                                                                                 |
+| :------- | :------------------------------- | :---------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST`   | `/api/v1/auth/register`          | Public                  | Register a new user account (`name`, `email`, `password`). Returns created user profile.                                                                                    |
+| `POST`   | `/api/v1/auth/token`             | Public                  | Authenticate user via email/credentials; returns JWT access token.                                                                                                          |
+| `POST`   | `/api/v1/auth/tokens`            | Signed in (not a token) | Create a read-only personal access token `{name, expires_in_days (1–365, default 90)}` → `201` with the plain `token` **once**.                                             |
+| `GET`    | `/api/v1/auth/tokens`            | Signed in (not a token) | List the caller's tokens (never the plain token).                                                                                                                           |
+| `DELETE` | `/api/v1/auth/tokens/{token_id}` | Signed in (not a token) | Revoke (soft, idempotent) → `204`.                                                                                                                                          |
+| `GET`    | `/api/v1/auth/me`                | Authenticated           | Retrieve current user profile and list of active `PromotionMember` campaigns (`memberships[]`: `member_id`, `promotion_id`, `promotion_name`, `promotion_status`, `roles`). |
 
 ### Auth Error Codes
 
-| Status | `code`                     | When                                                                                 |
-| :----- | :------------------------- | :----------------------------------------------------------------------------------- |
-| `401`  | `NOT_AUTHENTICATED`        | Missing or non-Bearer `Authorization` header.                                        |
-| `401`  | `TOKEN_EXPIRED`            | JWT `exp` is in the past.                                                            |
-| `401`  | `INVALID_TOKEN`            | Bad signature, malformed token/claims, or `sub` user no longer exists.               |
+| Status | `code`                     | When                                                                                   |
+| :----- | :------------------------- | :------------------------------------------------------------------------------------- |
+| `401`  | `NOT_AUTHENTICATED`        | Missing or non-Bearer `Authorization` header.                                          |
+| `401`  | `TOKEN_EXPIRED`            | JWT `exp` is in the past.                                                              |
+| `401`  | `INVALID_TOKEN`            | Bad signature, malformed token/claims, or `sub` user no longer exists.                 |
 | `401`  | `INVALID_CREDENTIALS`      | `/auth/token` with wrong password **or** unknown email (identical response by design). |
-| `409`  | `EMAIL_ALREADY_REGISTERED` | `/auth/register` with an email already in use (case-insensitive).                    |
-| `422`  | `VALIDATION_ERROR`         | Payload schema failure; per-field details in `errors[]` (`loc`, `msg`, `type`).      |
+| `409`  | `EMAIL_ALREADY_REGISTERED` | `/auth/register` with an email already in use (case-insensitive).                      |
+| `422`  | `VALIDATION_ERROR`         | Payload schema failure; per-field details in `errors[]` (`loc`, `msg`, `type`).        |
 
 > Emails are normalized to lowercase. Passwords: 8–128 characters, hashed with Argon2id. All 401 responses include `WWW-Authenticate: Bearer`.
 
@@ -137,11 +137,11 @@ Response (`200 OK`):
 
 ## 3. Institutions (`/institutions`)
 
-| Method | Endpoint                    | Min Role      | Description                                                    |
-| :----- | :-------------------------- | :------------ | :------------------------------------------------------------- |
+| Method | Endpoint                    | Min Role      | Description                                                                                                                         |
+| :----- | :-------------------------- | :------------ | :---------------------------------------------------------------------------------------------------------------------------------- |
 | `GET`  | `/api/v1/institutions`      | Authenticated | List all participating institutions. Optional `?q=` case-insensitive name search (LIKE wildcards escaped; results ordered by name). |
-| `POST` | `/api/v1/institutions`      | Authenticated | Register a new organizational tenant (school, NGO, committee). |
-| `GET`  | `/api/v1/institutions/{id}` | Authenticated | Get institution details and associated campaigns.              |
+| `POST` | `/api/v1/institutions`      | Authenticated | Register a new organizational tenant (school, NGO, committee).                                                                      |
+| `GET`  | `/api/v1/institutions/{id}` | Authenticated | Get institution details and associated campaigns.                                                                                   |
 
 ---
 
@@ -205,18 +205,18 @@ All fields optional: `name`, `sales_start_date`, `last_sales_date`, `delivery_da
 
 ### Tenants & Membership Error Codes
 
-| Status | `code`                      | When                                                                                     |
-| :----- | :-------------------------- | :--------------------------------------------------------------------------------------- |
-| `400`  | `INVALID_DATE_RANGE`        | Not `sales_start_date <= last_sales_date <= delivery_date`.                              |
-| `400`  | `INVALID_STATUS_TRANSITION` | Status change outside the allowed transitions.                                           |
-| `400`  | `CURRENCY_LOCKED`           | `PATCH` changes `currency` after the promotion has orders.                               |
-| `403`  | `INSUFFICIENT_ROLE`         | Active member without a required role.                                                   |
-| `404`  | `INSTITUTION_NOT_FOUND`     | Unknown institution id (path or `institution_id` in body).                               |
-| `404`  | `PROMOTION_NOT_FOUND`       | Unknown promotion, or caller is not an active member.                                    |
-| `404`  | `USER_NOT_FOUND`            | `POST .../members` with an email that has no account.                                    |
-| `404`  | `MEMBER_NOT_FOUND`          | `member_id` does not belong to this promotion.                                           |
-| `409`  | `ALREADY_MEMBER`            | `POST .../members` for a user who is already an active member.                           |
-| `409`  | `LAST_ADMIN`                | Change would leave the promotion with no active `promotion_admin`.                       |
+| Status | `code`                      | When                                                               |
+| :----- | :-------------------------- | :----------------------------------------------------------------- |
+| `400`  | `INVALID_DATE_RANGE`        | Not `sales_start_date <= last_sales_date <= delivery_date`.        |
+| `400`  | `INVALID_STATUS_TRANSITION` | Status change outside the allowed transitions.                     |
+| `400`  | `CURRENCY_LOCKED`           | `PATCH` changes `currency` after the promotion has orders.         |
+| `403`  | `INSUFFICIENT_ROLE`         | Active member without a required role.                             |
+| `404`  | `INSTITUTION_NOT_FOUND`     | Unknown institution id (path or `institution_id` in body).         |
+| `404`  | `PROMOTION_NOT_FOUND`       | Unknown promotion, or caller is not an active member.              |
+| `404`  | `USER_NOT_FOUND`            | `POST .../members` with an email that has no account.              |
+| `404`  | `MEMBER_NOT_FOUND`          | `member_id` does not belong to this promotion.                     |
+| `409`  | `ALREADY_MEMBER`            | `POST .../members` for a user who is already an active member.     |
+| `409`  | `LAST_ADMIN`                | Change would leave the promotion with no active `promotion_admin`. |
 
 ---
 
@@ -287,7 +287,7 @@ Content-Type: application/json
 
 1. `Idempotency-Key` header is required and must be a UUIDv4 (`400 IDEMPOTENCY_KEY_REQUIRED` / `400 INVALID_IDEMPOTENCY_KEY`).
 2. **First request** → `201 Created` + `Location`.
-3. **Retry** (same key, same payload, same seller & promotion) → `200 OK` with the existing order and header `Idempotent-Replayed: true`. Checked *before* any other rule, so a retry succeeds even if the promotion was closed meanwhile.
+3. **Retry** (same key, same payload, same seller & promotion) → `200 OK` with the existing order and header `Idempotent-Replayed: true`. Checked _before_ any other rule, so a retry succeeds even if the promotion was closed meanwhile.
 4. **Same key, different payload** (or another seller/promotion) → `409 IDEMPOTENCY_KEY_REUSED`.
 5. Promotion must be `ACTIVE` (`400 PROMOTION_NOT_ACTIVE`). Products must be active and belong to the promotion (`400 PRODUCT_UNAVAILABLE`). Customer must belong to the promotion (`404 CUSTOMER_NOT_FOUND`).
 6. `items`: 1–50 lines, `quantity` 1–1000, no repeated `product_id` (consolidate quantities client-side; `422` otherwise).
@@ -301,18 +301,18 @@ Content-Type: application/json
 
 ### Catalog, Customers & Orders Error Codes
 
-| Status | `code`                     | When                                                                     |
-| :----- | :------------------------- | :----------------------------------------------------------------------- |
-| `400`  | `IDEMPOTENCY_KEY_REQUIRED` | Missing `Idempotency-Key` header.                                        |
-| `400`  | `INVALID_IDEMPOTENCY_KEY`  | Header is not a UUIDv4.                                                  |
-| `400`  | `PROMOTION_NOT_ACTIVE`     | Order creation while promotion is `DRAFT` or `CLOSED`.                   |
-| `400`  | `PRODUCT_UNAVAILABLE`      | Item references an inactive product or one from another promotion.       |
-| `403`  | `INSUFFICIENT_ROLE`        | e.g. non-admin passing `include_inactive=true` on products.              |
-| `404`  | `PRODUCT_NOT_FOUND`        | `product_id` not in this promotion.                                      |
-| `404`  | `CUSTOMER_NOT_FOUND`       | `customer_id` not in this promotion.                                     |
-| `404`  | `ORDER_NOT_FOUND`          | Unknown order or outside the caller's visibility.                        |
-| `409`  | `IDEMPOTENCY_KEY_REUSED`   | Key already used with a different payload / seller / promotion.          |
-| `409`  | `CUSTOMER_ID_CONFLICT`     | Client-supplied customer `id` already exists with different data.        |
+| Status | `code`                     | When                                                               |
+| :----- | :------------------------- | :----------------------------------------------------------------- |
+| `400`  | `IDEMPOTENCY_KEY_REQUIRED` | Missing `Idempotency-Key` header.                                  |
+| `400`  | `INVALID_IDEMPOTENCY_KEY`  | Header is not a UUIDv4.                                            |
+| `400`  | `PROMOTION_NOT_ACTIVE`     | Order creation while promotion is `DRAFT` or `CLOSED`.             |
+| `400`  | `PRODUCT_UNAVAILABLE`      | Item references an inactive product or one from another promotion. |
+| `403`  | `INSUFFICIENT_ROLE`        | e.g. non-admin passing `include_inactive=true` on products.        |
+| `404`  | `PRODUCT_NOT_FOUND`        | `product_id` not in this promotion.                                |
+| `404`  | `CUSTOMER_NOT_FOUND`       | `customer_id` not in this promotion.                               |
+| `404`  | `ORDER_NOT_FOUND`          | Unknown order or outside the caller's visibility.                  |
+| `409`  | `IDEMPOTENCY_KEY_REUSED`   | Key already used with a different payload / seller / promotion.    |
+| `409`  | `CUSTOMER_ID_CONFLICT`     | Client-supplied customer `id` already exists with different data.  |
 
 ---
 
@@ -368,7 +368,7 @@ To enforce auditability, status changes (`paid_at`, `delivered_at`, `cancelled_a
 
 Each transition runs in a single transaction, evaluated in this order:
 
-1. **Idempotent replay** — key already used with the same payload by the same member → `200 OK` with the *current* order state and `Idempotent-Replayed: true` (even if later transitions changed the version). Same key, different payload/actor → `409 IDEMPOTENCY_KEY_REUSED`.
+1. **Idempotent replay** — key already used with the same payload by the same member → `200 OK` with the _current_ order state and `Idempotent-Replayed: true` (even if later transitions changed the version). Same key, different payload/actor → `409 IDEMPOTENCY_KEY_REUSED`.
 2. **Visibility & permission** — order outside the caller's visibility → `404 ORDER_NOT_FOUND`; visible but not modifiable (e.g. a seller+viewer on another seller's order) → `403 INSUFFICIENT_ROLE`.
 3. **OCC** — `expected_version` ≠ current `version` → `409 CONCURRENCY_CONFLICT` (detail: `expected: N, current: M`).
 4. **Transition rule** — not allowed in the current state → `400 INVALID_TRANSITION` (detail explains why).
@@ -376,11 +376,11 @@ Each transition runs in a single transaction, evaluated in this order:
 
 Success → `200 OK` with the full order (`items`, `audit_events`, new `version`). `reason` is required (non-blank) for `REVOKE_PAYMENT`, `REVOKE_DELIVERY` and cancellation (`422` otherwise).
 
-| Status | `code`                   | When                                                       |
-| :----- | :----------------------- | :--------------------------------------------------------- |
-| `400`  | `INVALID_TRANSITION`     | Transition not allowed in the order's current state.       |
-| `409`  | `CONCURRENCY_CONFLICT`   | `expected_version` does not match (stale client).          |
-| `409`  | `IDEMPOTENCY_KEY_REUSED` | Key already used for a different transition or actor.      |
+| Status | `code`                   | When                                                  |
+| :----- | :----------------------- | :---------------------------------------------------- |
+| `400`  | `INVALID_TRANSITION`     | Transition not allowed in the order's current state.  |
+| `409`  | `CONCURRENCY_CONFLICT`   | `expected_version` does not match (stale client).     |
+| `409`  | `IDEMPOTENCY_KEY_REUSED` | Key already used for a different transition or actor. |
 
 ---
 

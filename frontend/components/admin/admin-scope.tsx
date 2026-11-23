@@ -28,14 +28,18 @@ function AdminNav({ scope }: { scope: AdminScope }) {
   return (
     <nav className="flex gap-1 overflow-x-auto border-b border-zinc-200 pb-2 dark:border-zinc-800">
       {NAV.filter((item) => scope.isAdmin || !item.adminOnly).map((item) => {
-        const active = pathname === item.href || (item.key === "orders" && pathname === "/promotion/admin/order");
+        const active =
+          pathname === item.href ||
+          (item.key === "orders" && pathname === "/promotion/admin/order");
         return (
           <Link
             key={item.key}
             href={`${item.href}?id=${scope.promotion.id}`}
             aria-current={active ? "page" : undefined}
             className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium ${
-              active ? "bg-indigo-600 text-white" : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+              active
+                ? "bg-indigo-600 text-white"
+                : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
             }`}
           >
             {t(item.key)}

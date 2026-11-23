@@ -36,7 +36,9 @@ function CustomerFilter({
     return (
       <div className="flex items-end gap-2">
         <div className="flex-1">
-          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("customer")}</span>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            {t("customer")}
+          </span>
           <p className="py-3 font-medium">{selectedName}</p>
         </div>
         <Button variant="ghost" onClick={() => onPick(null)}>
@@ -47,12 +49,21 @@ function CustomerFilter({
   }
   return (
     <div className="relative">
-      <Field label={t("customerSearch")} type="search" value={q} onChange={(e) => setQ(e.target.value)} />
+      <Field
+        label={t("customerSearch")}
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+      />
       {results.data && results.data.items.length > 0 ? (
         <ul className="absolute z-10 mt-1 w-full rounded-lg border border-zinc-200 bg-white shadow dark:border-zinc-800 dark:bg-zinc-900">
           {results.data.items.map((c) => (
             <li key={c.id}>
-              <button type="button" className="w-full px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={() => onPick(c)}>
+              <button
+                type="button"
+                className="w-full px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                onClick={() => onPick(c)}
+              >
                 {c.name} <span className="text-sm text-zinc-500">{c.contact}</span>
               </button>
             </li>
@@ -87,11 +98,15 @@ function Orders({ promotion }: AdminScope) {
       <Card>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <label className="block space-y-1">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("admin.orders.status")}</span>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              {t("admin.orders.status")}
+            </span>
             <select
               className={select}
               value={filters.classification ?? ""}
-              onChange={(e) => go({ classification: (e.target.value || null) as OrderFilters["classification"] })}
+              onChange={(e) =>
+                go({ classification: (e.target.value || null) as OrderFilters["classification"] })
+              }
             >
               <option value="">{t("admin.orders.any")}</option>
               {CLASSIFICATIONS.map((c) => (
@@ -102,7 +117,9 @@ function Orders({ promotion }: AdminScope) {
             </select>
           </label>
           <label className="block space-y-1">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("admin.orders.seller")}</span>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              {t("admin.orders.seller")}
+            </span>
             <select
               className={select}
               value={filters.sellerMemberId ?? ""}
@@ -148,7 +165,10 @@ function Orders({ promotion }: AdminScope) {
                 {orders.data.items.map((o) => (
                   <tr key={o.id}>
                     <td className="py-2">
-                      <Link href={adminOrderHref(promotion.id, o.id)} className="font-medium text-indigo-600">
+                      <Link
+                        href={adminOrderHref(promotion.id, o.id)}
+                        className="font-medium text-indigo-600"
+                      >
                         {o.customer.name}
                       </Link>
                     </td>
@@ -157,7 +177,9 @@ function Orders({ promotion }: AdminScope) {
                       <ClassificationBadge value={o.status_classification} />
                     </td>
                     <td className="text-right tabular-nums">{money(o.total_amount)}</td>
-                    <td className="text-right text-zinc-500">{formatDateTime(o.created_at, locale)}</td>
+                    <td className="text-right text-zinc-500">
+                      {formatDateTime(o.created_at, locale)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -165,11 +187,19 @@ function Orders({ promotion }: AdminScope) {
           </div>
         )}
         <div className="mt-4 flex items-center justify-between gap-2 text-sm">
-          <Button variant="ghost" disabled={filters.page <= 1} onClick={() => go({ page: filters.page - 1 })}>
+          <Button
+            variant="ghost"
+            disabled={filters.page <= 1}
+            onClick={() => go({ page: filters.page - 1 })}
+          >
             ← {t("admin.orders.prev")}
           </Button>
           <span>{t("admin.orders.page", { page: filters.page, pages })}</span>
-          <Button variant="ghost" disabled={filters.page >= pages} onClick={() => go({ page: filters.page + 1 })}>
+          <Button
+            variant="ghost"
+            disabled={filters.page >= pages}
+            onClick={() => go({ page: filters.page + 1 })}
+          >
             {t("admin.orders.next")} →
           </Button>
         </div>

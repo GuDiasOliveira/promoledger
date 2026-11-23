@@ -63,9 +63,17 @@ export function AuthForm({ mode }: { mode: Mode }) {
     <div className="mx-auto max-w-sm">
       <Card>
         <form onSubmit={onSubmit} className="space-y-4">
-          <h1 className="text-xl font-semibold">{isRegister ? t("registerTitle") : t("loginTitle")}</h1>
+          <h1 className="text-xl font-semibold">
+            {isRegister ? t("registerTitle") : t("loginTitle")}
+          </h1>
           {isRegister ? (
-            <Field label={t("name")} value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" />
+            <Field
+              label={t("name")}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              autoComplete="name"
+            />
           ) : null}
           <Field
             label={t("email")}
@@ -91,7 +99,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
           </Button>
           <p className="text-center text-sm text-zinc-600 dark:text-zinc-400">
             {isRegister ? t("haveAccount") : t("noAccount")}{" "}
-            <Link href={isRegister ? "/login" : "/register"} className="font-medium text-indigo-600">
+            <Link
+              href={isRegister ? "/login" : "/register"}
+              className="font-medium text-indigo-600"
+            >
               {isRegister ? t("goLogin") : t("goRegister")}
             </Link>
           </p>

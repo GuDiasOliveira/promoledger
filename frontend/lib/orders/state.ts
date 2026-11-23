@@ -12,7 +12,12 @@ export interface OrderState {
   cancelledAt: string | null;
 }
 
-export type Classification = "UNPAID_PENDING" | "PAID_PENDING" | "DIVERGENCE" | "SETTLED" | "CANCELLED";
+export type Classification =
+  | "UNPAID_PENDING"
+  | "PAID_PENDING"
+  | "DIVERGENCE"
+  | "SETTLED"
+  | "CANCELLED";
 
 export const TRANSITIONS: TransitionKind[] = [
   "MARK_PAID",
@@ -29,7 +34,10 @@ export const REASON_REQUIRED: ReadonlySet<TransitionKind> = new Set([
 ]);
 
 /** Endpoint + action of each kind (docs/api.md §8.1–8.3). */
-export const ENDPOINT: Record<TransitionKind, { path: "payment" | "delivery" | "cancel"; action?: string }> = {
+export const ENDPOINT: Record<
+  TransitionKind,
+  { path: "payment" | "delivery" | "cancel"; action?: string }
+> = {
   MARK_PAID: { path: "payment", action: "MARK_PAID" },
   REVOKE_PAYMENT: { path: "payment", action: "REVOKE_PAYMENT" },
   MARK_DELIVERED: { path: "delivery", action: "MARK_DELIVERED" },

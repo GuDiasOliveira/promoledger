@@ -28,7 +28,11 @@ function subscribeOnline(listener: () => void): () => void {
 }
 
 export function useOnline(): boolean {
-  return useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
+  return useSyncExternalStore(
+    subscribeOnline,
+    () => navigator.onLine,
+    () => true,
+  );
 }
 
 export function useSyncOutcome() {
@@ -65,7 +69,9 @@ export function usePromotion(userId: string | null, promotionId: string | null) 
 /** Warm the offline catalog + customers for a promotion (call while online). */
 export function usePromotionData(userId: string | null, promotionId: string | null) {
   const enabled = userId !== null && promotionId !== null;
-  useRefresh(["catalog", userId, promotionId], enabled, () => refreshCatalog(db, userId!, promotionId!));
+  useRefresh(["catalog", userId, promotionId], enabled, () =>
+    refreshCatalog(db, userId!, promotionId!),
+  );
   useRefresh(["customers", userId, promotionId], enabled, () =>
     refreshCustomers(db, userId!, promotionId!),
   );
@@ -98,7 +104,9 @@ export function useOutbox(userId: string | null, promotionId?: string | null) {
 /** The seller's orders for a promotion, each derived as server snapshot + queued actions. */
 export function useOrders(userId: string | null, promotionId: string | null) {
   const enabled = userId !== null && promotionId !== null;
-  useRefresh(["orders", userId, promotionId], enabled, () => refreshOrders(db, userId!, promotionId!));
+  useRefresh(["orders", userId, promotionId], enabled, () =>
+    refreshOrders(db, userId!, promotionId!),
+  );
   return useLiveQuery(async () => {
     if (!enabled) return [];
     const [orders, queue] = await Promise.all([

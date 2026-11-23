@@ -26,7 +26,9 @@ export function parseMoneyInput(raw: string): MoneyInputResult {
 
 /** Inverse for editing: "19.90" -> "19,90" in locales that use a decimal comma. */
 export function moneyToInput(value: string, locale: string): string {
-  const decimal = new Intl.NumberFormat(locale).formatToParts(1.5).find((p) => p.type === "decimal")?.value;
+  const decimal = new Intl.NumberFormat(locale)
+    .formatToParts(1.5)
+    .find((p) => p.type === "decimal")?.value;
   return decimal === "," ? value.replace(".", ",") : value;
 }
 

@@ -4,7 +4,10 @@ import { createAccount, createOrderAsSeller, logInViaUi, seedScenario } from "./
 
 const main = (page: Page) => page.locator("main");
 
-test("an admin sets up a whole promotion through the UI and a seller can sell", async ({ page, browser }) => {
+test("an admin sets up a whole promotion through the UI and a seller can sell", async ({
+  page,
+  browser,
+}) => {
   const admin = await createAccount("admin");
   const seller = await createAccount("seller");
   const org = `E2E Org ${crypto.randomUUID().slice(0, 8)}`;
@@ -52,7 +55,10 @@ test("an admin sets up a whole promotion through the UI and a seller can sell", 
   await expect(sellerPage.getByText("R$19.90")).toBeVisible();
 });
 
-test("archiving hides a product from sellers and restoring brings it back", async ({ page, browser }) => {
+test("archiving hides a product from sellers and restoring brings it back", async ({
+  page,
+  browser,
+}) => {
   const s = await seedScenario();
   await logInViaUi(page, s.admin);
   await page.goto(`/promotion/admin/products?id=${s.promotionId}`);
@@ -89,10 +95,14 @@ test("member management shows the server's rules as translated messages", async 
   await me.getByLabel("Admin").uncheck();
   await me.getByLabel("Seller").check();
   await me.getByRole("button", { name: "Save" }).click();
-  await expect(main(page).getByRole("alert")).toHaveText("A promotion must keep at least one admin.");
+  await expect(main(page).getByRole("alert")).toHaveText(
+    "A promotion must keep at least one admin.",
+  );
 });
 
-test("settings: currency locks after the first order; closing asks for confirmation", async ({ page }) => {
+test("settings: currency locks after the first order; closing asks for confirmation", async ({
+  page,
+}) => {
   const s = await seedScenario();
   await createOrderAsSeller(s, "First Order");
   await logInViaUi(page, s.admin);

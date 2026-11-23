@@ -37,7 +37,10 @@ function AdminOrder({ promotion, isAdmin }: AdminScope) {
       setReason("");
       queryClient.setQueryData(["admin", promotion.id, "order", orderId], updated);
       // Totals, divergences, ranking and lists all depend on this order.
-      void queryClient.invalidateQueries({ queryKey: ["admin", promotion.id], refetchType: "none" });
+      void queryClient.invalidateQueries({
+        queryKey: ["admin", promotion.id],
+        refetchType: "none",
+      });
     },
     onError: (error) => {
       // Decision 2 (Slice 4.4): no blind retry — reload the current state and let the admin decide.
@@ -115,16 +118,28 @@ function AdminOrder({ promotion, isAdmin }: AdminScope) {
         <Card>
           <div className="space-y-3">
             {conflict ? (
-              <p role="alert" className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+              <p
+                role="alert"
+                className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+              >
                 {t("admin.order.conflict")}
               </p>
             ) : act.isError ? (
               <ErrorBanner message={errorMessage(act.error)} />
             ) : null}
             {reasonFor ? (
-              <form onSubmit={submitReason} className="space-y-3" aria-label={t(`order.actions.${reasonFor}`)}>
+              <form
+                onSubmit={submitReason}
+                className="space-y-3"
+                aria-label={t(`order.actions.${reasonFor}`)}
+              >
                 <p className="font-medium">{t(`order.actions.${reasonFor}`)}</p>
-                <Field label={t("order.reason")} value={reason} onChange={(e) => setReason(e.target.value)} autoFocus />
+                <Field
+                  label={t("order.reason")}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  autoFocus
+                />
                 <div className="flex gap-2">
                   <Button type="submit" disabled={!reason.trim() || act.isPending}>
                     {t("order.confirm")}
@@ -141,7 +156,9 @@ function AdminOrder({ promotion, isAdmin }: AdminScope) {
                   className="w-full"
                   variant={kind === "MARK_PAID" || kind === "MARK_DELIVERED" ? "primary" : "ghost"}
                   disabled={act.isPending}
-                  onClick={() => (REASON_REQUIRED.has(kind) ? setReasonFor(kind) : act.mutate({ kind, why: null }))}
+                  onClick={() =>
+                    REASON_REQUIRED.has(kind) ? setReasonFor(kind) : act.mutate({ kind, why: null })
+                  }
                 >
                   {t(`order.actions.${kind}`)}
                 </Button>

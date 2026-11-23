@@ -25,7 +25,8 @@ afterEach(async () => {
   await db.delete();
 });
 
-const problem = (status: number, code: string) => toApiError(status, { status, code, detail: code });
+const problem = (status: number, code: string) =>
+  toApiError(status, { status, code, detail: code });
 
 async function seedCustomerAndOrder(userId = USER_A) {
   const customer = await createCustomerOffline(db, {
@@ -201,7 +202,13 @@ describe("runSync", () => {
 
     await retryItem(db, customer.seq!);
     const sentKeys: string[] = [];
-    await runSync({ db, userId: USER_A, send: async (i) => void sentKeys.push(i.idempotencyKey), now, random });
+    await runSync({
+      db,
+      userId: USER_A,
+      send: async (i) => void sentKeys.push(i.idempotencyKey),
+      now,
+      random,
+    });
 
     expect(sentKeys).toEqual([customer.idempotencyKey, order.idempotencyKey]);
     expect(await db.outbox.count()).toBe(0);

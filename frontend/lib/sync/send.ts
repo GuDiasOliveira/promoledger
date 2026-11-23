@@ -42,7 +42,10 @@ export function snapshotFromServer(order: ServerOrder): Partial<CachedOrder> {
 /** Server lines win; a local name is only a fallback if the server sent none. */
 export function mergeLines(current: CachedOrder | undefined, incoming: Partial<CachedOrder>) {
   const names = new Map((current?.lines ?? []).map((l) => [l.productId, l.name]));
-  return (incoming.lines ?? []).map((l) => ({ ...l, name: l.name || names.get(l.productId) || "" }));
+  return (incoming.lines ?? []).map((l) => ({
+    ...l,
+    name: l.name || names.get(l.productId) || "",
+  }));
 }
 
 export async function applyServerOrder(db: PromoLedgerDB, key: string, order: ServerOrder) {
@@ -83,7 +86,11 @@ export function apiSender(db: PromoLedgerDB): Sender {
         const local = await db.orders.get(item.localRef);
         if (!local?.serverId) {
           // Unreachable in practice: FIFO + deps guarantee the creation was sent first.
-          throw toApiError(409, { status: 409, code: "ORDER_NOT_SYNCED", detail: "Order not sent yet" });
+          throw toApiError(409, {
+            status: 409,
+            code: "ORDER_NOT_SYNCED",
+            detail: "Order not sent yet",
+          });
         }
         const kind = item.payload.kind as TransitionKind;
         const params = {
@@ -94,10 +101,19 @@ export function apiSender(db: PromoLedgerDB): Sender {
         const endpoint = ENDPOINT[kind].path;
         const order = await unwrap(
           endpoint === "payment"
-            ? api.POST("/api/v1/promotions/{promotion_id}/orders/{order_id}/payment", { params, body })
+            ? api.POST("/api/v1/promotions/{promotion_id}/orders/{order_id}/payment", {
+                params,
+                body,
+              })
             : endpoint === "delivery"
-              ? api.POST("/api/v1/promotions/{promotion_id}/orders/{order_id}/delivery", { params, body })
-              : api.POST("/api/v1/promotions/{promotion_id}/orders/{order_id}/cancel", { params, body }),
+              ? api.POST("/api/v1/promotions/{promotion_id}/orders/{order_id}/delivery", {
+                  params,
+                  body,
+                })
+              : api.POST("/api/v1/promotions/{promotion_id}/orders/{order_id}/cancel", {
+                  params,
+                  body,
+                }),
         );
         await applyServerOrder(db, item.localRef, order);
         return;

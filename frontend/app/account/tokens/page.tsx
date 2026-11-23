@@ -25,10 +25,16 @@ function NewTokenSecret({ token }: { token: string }) {
   const t = useTranslations("tokens");
   const [copied, setCopied] = useState(false);
   return (
-    <div role="status" className="space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950">
+    <div
+      role="status"
+      className="space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950"
+    >
       <p className="text-sm font-medium text-amber-900 dark:text-amber-200">{t("copyNow")}</p>
       <div className="flex flex-wrap items-center gap-2">
-        <code className="break-all rounded bg-white px-2 py-1 text-sm dark:bg-zinc-900" data-testid="new-token">
+        <code
+          className="break-all rounded bg-white px-2 py-1 text-sm dark:bg-zinc-900"
+          data-testid="new-token"
+        >
           {token}
         </code>
         <Button
@@ -66,7 +72,9 @@ function Tokens() {
 
   const create = useMutation({
     mutationFn: () =>
-      unwrap(api.POST("/api/v1/auth/tokens", { body: { name: name.trim(), expires_in_days: days } })),
+      unwrap(
+        api.POST("/api/v1/auth/tokens", { body: { name: name.trim(), expires_in_days: days } }),
+      ),
     ...last.handlers,
     onSuccess: (created) => {
       setSecret(created.token);
@@ -101,10 +109,22 @@ function Tokens() {
       <Card>
         <h1 className="text-xl font-semibold">{t("tokens.title")}</h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{t("tokens.intro")}</p>
-        <form onSubmit={submit} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3" aria-label={t("tokens.create")}>
-          <Field label={t("tokens.name")} value={name} onChange={(e) => setName(e.target.value)} required maxLength={100} />
+        <form
+          onSubmit={submit}
+          className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3"
+          aria-label={t("tokens.create")}
+        >
+          <Field
+            label={t("tokens.name")}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            maxLength={100}
+          />
           <label className="block space-y-1">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("tokens.expires")}</span>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              {t("tokens.expires")}
+            </span>
             <select
               className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-3 dark:border-zinc-700 dark:bg-zinc-950"
               value={days}
@@ -129,7 +149,11 @@ function Tokens() {
           </div>
         ) : null}
       </Card>
-      <ErrorBanner message={last.error ? errorMessage(last.error) : tokens.error ? errorMessage(tokens.error) : null} />
+      <ErrorBanner
+        message={
+          last.error ? errorMessage(last.error) : tokens.error ? errorMessage(tokens.error) : null
+        }
+      />
       <Card>
         {!tokens.data ? (
           <p>{t("common.loading")}</p>
@@ -140,11 +164,17 @@ function Tokens() {
             {tokens.data.map((token) => {
               const state = status(token);
               return (
-                <li key={token.id} className="flex flex-wrap items-center justify-between gap-2 py-3" data-testid="token-row">
+                <li
+                  key={token.id}
+                  className="flex flex-wrap items-center justify-between gap-2 py-3"
+                  data-testid="token-row"
+                >
                   <div>
                     <span className="font-medium">{token.name}</span>{" "}
                     <code className="text-sm text-zinc-500">{token.prefix}…</code>{" "}
-                    <Badge tone={state === "active" ? "green" : "amber"}>{t(`tokens.status.${state}`)}</Badge>
+                    <Badge tone={state === "active" ? "green" : "amber"}>
+                      {t(`tokens.status.${state}`)}
+                    </Badge>
                     <p className="text-xs text-zinc-500">
                       {t("tokens.created", { date: formatDateTime(token.created_at, locale) })} ·{" "}
                       {t("tokens.expiresAt", { date: formatDateTime(token.expires_at, locale) })} ·{" "}
@@ -157,7 +187,9 @@ function Tokens() {
                     <Button
                       variant="ghost"
                       disabled={revoke.isPending}
-                      onClick={() => window.confirm(t("tokens.confirmRevoke")) && revoke.mutate(token.id)}
+                      onClick={() =>
+                        window.confirm(t("tokens.confirmRevoke")) && revoke.mutate(token.id)
+                      }
                     >
                       {t("tokens.revoke")}
                     </Button>

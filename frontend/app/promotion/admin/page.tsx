@@ -13,7 +13,13 @@ import { useErrorMessage } from "@/lib/hooks";
 import { formatMoney, parseMoney } from "@/lib/money";
 import type { Classification } from "@/lib/orders/state";
 
-const ORDER: Classification[] = ["SETTLED", "PAID_PENDING", "UNPAID_PENDING", "DIVERGENCE", "CANCELLED"];
+const ORDER: Classification[] = [
+  "SETTLED",
+  "PAID_PENDING",
+  "UNPAID_PENDING",
+  "DIVERGENCE",
+  "CANCELLED",
+];
 const BAR_COLOR: Record<Classification, string> = {
   SETTLED: "bg-emerald-500",
   PAID_PENDING: "bg-amber-400",
@@ -52,23 +58,39 @@ function Dashboard({ promotion }: AdminScope) {
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Kpi label={t("admin.kpi.revenue")} value={money(s.total_revenue)} testId="kpi-revenue" />
-        <Kpi label={t("admin.kpi.collected")} value={money(s.collected_amount)} testId="kpi-collected" />
-        <Kpi label={t("admin.kpi.outstanding")} value={money(s.outstanding_amount)} testId="kpi-outstanding" />
+        <Kpi
+          label={t("admin.kpi.collected")}
+          value={money(s.collected_amount)}
+          testId="kpi-collected"
+        />
+        <Kpi
+          label={t("admin.kpi.outstanding")}
+          value={money(s.outstanding_amount)}
+          testId="kpi-outstanding"
+        />
         <Kpi
           label={t("admin.kpi.units")}
-          value={t("admin.kpi.unitsValue", { delivered: s.units_delivered, ordered: s.units_ordered })}
+          value={t("admin.kpi.unitsValue", {
+            delivered: s.units_delivered,
+            ordered: s.units_ordered,
+          })}
           testId="kpi-units"
         />
       </div>
 
       <Card>
         <h2 className="mb-3 font-semibold">{t("admin.breakdown")}</h2>
-        <div className="flex h-3 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800" aria-hidden>
+        <div
+          className="flex h-3 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
+          aria-hidden
+        >
           {ORDER.filter((c) => c !== "CANCELLED").map((c) => (
             <div
               key={c}
               className={BAR_COLOR[c]}
-              style={{ width: `${shareBasisPoints(s.by_classification[c].amount, liveTotal) / 100}%` }}
+              style={{
+                width: `${shareBasisPoints(s.by_classification[c].amount, liveTotal) / 100}%`,
+              }}
             />
           ))}
         </div>
@@ -77,7 +99,9 @@ function Dashboard({ promotion }: AdminScope) {
             <li key={c} className="flex flex-col gap-1" data-testid={`bucket-${c}`}>
               <ClassificationBadge value={c} />
               <span className="tabular-nums">{money(s.by_classification[c].amount)}</span>
-              <span className="text-zinc-500">{t("admin.count", { count: s.by_classification[c].count })}</span>
+              <span className="text-zinc-500">
+                {t("admin.count", { count: s.by_classification[c].count })}
+              </span>
             </li>
           ))}
         </ul>
@@ -98,7 +122,9 @@ function Dashboard({ promotion }: AdminScope) {
                   className="flex items-center justify-between gap-2 py-2 hover:text-indigo-600"
                 >
                   <span className="font-medium">{o.customer.name}</span>
-                  <span className="text-sm text-zinc-500">{formatDateTime(o.created_at, locale)}</span>
+                  <span className="text-sm text-zinc-500">
+                    {formatDateTime(o.created_at, locale)}
+                  </span>
                   <span className="tabular-nums">{money(o.total_amount)}</span>
                 </Link>
               </li>
@@ -136,7 +162,9 @@ function Dashboard({ promotion }: AdminScope) {
                     <td className="text-right">{row.units_sold}</td>
                     <td className="text-right">{money(row.gross_revenue)}</td>
                     <td className="text-right">{money(row.settled_amount)}</td>
-                    <td className="text-right">{formatPercent(row.settlement_percentage, locale)}</td>
+                    <td className="text-right">
+                      {formatPercent(row.settlement_percentage, locale)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

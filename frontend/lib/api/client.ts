@@ -34,7 +34,11 @@ export async function unwrap<T>(request: Promise<FetchResult<T>>): Promise<T> {
     throw new NetworkError(cause);
   }
   if (!result.response.ok) {
-    throw toApiError(result.response.status, result.error, new URL(result.response.url, "http://x").pathname);
+    throw toApiError(
+      result.response.status,
+      result.error,
+      new URL(result.response.url, "http://x").pathname,
+    );
   }
   return result.data as T;
 }

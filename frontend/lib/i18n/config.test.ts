@@ -24,7 +24,9 @@ describe("message catalogs", () => {
 
   it.each(locales)("%s has no empty translations", (locale) => {
     const flat = keyPaths(messages[locale]).map((path) =>
-      path.split(".").reduce<unknown>((node, key) => (node as Record<string, unknown>)[key], messages[locale]),
+      path
+        .split(".")
+        .reduce<unknown>((node, key) => (node as Record<string, unknown>)[key], messages[locale]),
     );
     expect(flat.every((text) => typeof text === "string" && text.trim().length > 0)).toBe(true);
   });
@@ -32,7 +34,12 @@ describe("message catalogs", () => {
   it.each(locales)("%s keeps the same {placeholders} as en-US", (locale) => {
     for (const path of reference) {
       const get = (catalog: unknown) =>
-        path.split(".").reduce<unknown>((node, key) => (node as Record<string, unknown>)[key], catalog) as string;
+        path
+          .split(".")
+          .reduce<unknown>(
+            (node, key) => (node as Record<string, unknown>)[key],
+            catalog,
+          ) as string;
       expect(placeholders(get(messages[locale])), `${locale}:${path}`).toEqual(
         placeholders(get(messages[defaultLocale])),
       );

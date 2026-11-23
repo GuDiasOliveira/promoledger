@@ -30,7 +30,8 @@ function InstitutionPicker({
   const [q, setQ] = useState("");
   const results = useQuery({
     queryKey: ["institutions", q],
-    queryFn: () => unwrap(api.GET("/api/v1/institutions", { params: { query: { q, page: 1, size: 8 } } })),
+    queryFn: () =>
+      unwrap(api.GET("/api/v1/institutions", { params: { query: { q, page: 1, size: 8 } } })),
     enabled: q.trim().length >= 2,
   });
 
@@ -38,7 +39,9 @@ function InstitutionPicker({
     return (
       <div className="flex items-end justify-between gap-2">
         <div>
-          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("institution")}</span>
+          <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            {t("institution")}
+          </span>
           <p className="py-2 font-medium" data-testid="institution-choice">
             {value.name}
           </p>
@@ -52,7 +55,12 @@ function InstitutionPicker({
   const exact = results.data?.items.some((i) => i.name.toLowerCase() === q.trim().toLowerCase());
   return (
     <div className="space-y-2">
-      <Field label={t("searchInstitution")} type="search" value={q} onChange={(e) => setQ(e.target.value)} />
+      <Field
+        label={t("searchInstitution")}
+        type="search"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+      />
       <ul className="space-y-1">
         {(results.data?.items ?? []).map((i) => (
           <li key={i.id}>
@@ -67,7 +75,11 @@ function InstitutionPicker({
         ))}
       </ul>
       {q.trim().length >= 2 && results.data && !exact ? (
-        <Button type="button" variant="ghost" onClick={() => onChange({ id: null, name: q.trim() })}>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => onChange({ id: null, name: q.trim() })}
+        >
           + {t("createInstitution", { name: q.trim() })}
         </Button>
       ) : null}
@@ -135,16 +147,43 @@ function NewPromotion() {
       <Card>
         <form onSubmit={submit} className="space-y-4">
           <h1 className="text-xl font-semibold">{t("newPromotion.title")}</h1>
-          <Field label={t("newPromotion.name")} value={name} onChange={(e) => setName(e.target.value)} required />
+          <Field
+            label={t("newPromotion.name")}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
           <InstitutionPicker value={institution} onChange={setInstitution} />
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Field label={t("newPromotion.salesStart")} type="date" value={salesStart} onChange={(e) => setSalesStart(e.target.value)} required />
-            <Field label={t("newPromotion.lastSales")} type="date" value={lastSales} onChange={(e) => setLastSales(e.target.value)} required />
-            <Field label={t("newPromotion.delivery")} type="date" value={delivery} onChange={(e) => setDelivery(e.target.value)} required />
+            <Field
+              label={t("newPromotion.salesStart")}
+              type="date"
+              value={salesStart}
+              onChange={(e) => setSalesStart(e.target.value)}
+              required
+            />
+            <Field
+              label={t("newPromotion.lastSales")}
+              type="date"
+              value={lastSales}
+              onChange={(e) => setLastSales(e.target.value)}
+              required
+            />
+            <Field
+              label={t("newPromotion.delivery")}
+              type="date"
+              value={delivery}
+              onChange={(e) => setDelivery(e.target.value)}
+              required
+            />
           </div>
-          {datesTouched && !datesOk ? <ErrorBanner message={t("newPromotion.invalidDates")} /> : null}
+          {datesTouched && !datesOk ? (
+            <ErrorBanner message={t("newPromotion.invalidDates")} />
+          ) : null}
           <label className="block space-y-1">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("newPromotion.currency")}</span>
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              {t("newPromotion.currency")}
+            </span>
             <select
               className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-3 dark:border-zinc-700 dark:bg-zinc-950"
               value={currency}

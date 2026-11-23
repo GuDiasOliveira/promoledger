@@ -18,14 +18,18 @@ function RolePicker({ value, onChange }: { value: Role[]; onChange: (roles: Role
   const t = useTranslations();
   return (
     <fieldset className="flex flex-wrap gap-3">
-      <legend className="mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">{t("members.roles")}</legend>
+      <legend className="mb-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        {t("members.roles")}
+      </legend>
       {ROLES.map((role) => (
         <label key={role} className="flex min-h-11 items-center gap-2">
           <input
             type="checkbox"
             className="h-5 w-5"
             checked={value.includes(role)}
-            onChange={(e) => onChange(e.target.checked ? [...value, role] : value.filter((r) => r !== role))}
+            onChange={(e) =>
+              onChange(e.target.checked ? [...value, role] : value.filter((r) => r !== role))
+            }
           />
           {t(`promotions.roles.${role}`)}
         </label>
@@ -90,7 +94,11 @@ function MemberRow({
               {t("members.editRoles")}
             </Button>
           ) : null}
-          <Button variant="ghost" disabled={pending} onClick={() => onUpdate({ revoked: !revoked })}>
+          <Button
+            variant="ghost"
+            disabled={pending}
+            onClick={() => onUpdate({ revoked: !revoked })}
+          >
             {revoked ? t("members.reinstate") : t("members.revoke")}
           </Button>
         </div>
@@ -112,7 +120,10 @@ function Members({ promotion }: AdminScope) {
     queryFn: () =>
       unwrap(
         api.GET("/api/v1/promotions/{promotion_id}/members", {
-          params: { path: { promotion_id: promotion.id }, query: { include_revoked: includeRevoked, page: 1, size: 100 } },
+          params: {
+            path: { promotion_id: promotion.id },
+            query: { include_revoked: includeRevoked, page: 1, size: 100 },
+          },
         }),
       ),
   });
@@ -158,9 +169,17 @@ function Members({ promotion }: AdminScope) {
       <Card>
         <form onSubmit={submit} className="space-y-3" aria-label={t("members.add")}>
           <h2 className="font-semibold">{t("members.add")}</h2>
-          <Field label={t("members.email")} type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <Field
+            label={t("members.email")}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
           <RolePicker value={roles} onChange={setRoles} />
-          {roles.length === 0 ? <p className="text-sm text-red-700">{t("members.pickRole")}</p> : null}
+          {roles.length === 0 ? (
+            <p className="text-sm text-red-700">{t("members.pickRole")}</p>
+          ) : null}
           <Button type="submit" disabled={!email.trim() || roles.length === 0 || add.isPending}>
             {t("members.add")}
           </Button>
@@ -174,7 +193,12 @@ function Members({ promotion }: AdminScope) {
       <ErrorBanner message={error ? errorMessage(error) : null} />
       <Card>
         <label className="mb-2 flex min-h-11 items-center gap-2 text-sm">
-          <input type="checkbox" className="h-5 w-5" checked={includeRevoked} onChange={(e) => setIncludeRevoked(e.target.checked)} />
+          <input
+            type="checkbox"
+            className="h-5 w-5"
+            checked={includeRevoked}
+            onChange={(e) => setIncludeRevoked(e.target.checked)}
+          />
           {t("members.includeRevoked")}
         </label>
         {!members.data ? (

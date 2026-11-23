@@ -17,16 +17,26 @@ import {
 async function seedLedger() {
   const s = await seedScenario();
   const sellerB = await s.addSeller("seller-b");
-  const settled = await createOrderAsSeller(s, "Ana Settled", { markPaidNow: true, lines: [["Chocolate Egg", 2]] });
+  const settled = await createOrderAsSeller(s, "Ana Settled", {
+    markPaidNow: true,
+    lines: [["Chocolate Egg", 2]],
+  });
   await adminTransition(s, settled, "delivery", { action: "MARK_DELIVERED", expected_version: 1 });
   await createOrderAsSeller(s, "Ana Paid", { markPaidNow: true, lines: [["Bonbon", 3]] });
   const divergence = await createOrderAsSeller(s, "Bia Divergence", { seller: sellerB });
-  await adminTransition(s, divergence, "delivery", { action: "MARK_DELIVERED", expected_version: 1 });
+  await adminTransition(s, divergence, "delivery", {
+    action: "MARK_DELIVERED",
+    expected_version: 1,
+  });
   const unpaid = await createOrderAsSeller(s, "Bia Unpaid", { seller: sellerB });
   return { s, divergence, unpaid };
 }
 
-async function openDashboard(page: import("@playwright/test").Page, s: Scenario, account = s.admin) {
+async function openDashboard(
+  page: import("@playwright/test").Page,
+  s: Scenario,
+  account = s.admin,
+) {
   await logInViaUi(page, account);
   await page.goto(`/promotion?id=${s.promotionId}`);
   await page.getByRole("link", { name: "Dashboard" }).click();
@@ -38,7 +48,11 @@ test("dashboard shows the exact server totals and the seller ranking", async ({ 
   await openDashboard(page, s);
 
   const api = await summaryFromApi(s);
-  expect(api).toMatchObject({ total_revenue: "79.90", collected_amount: "40.10", outstanding_amount: "39.80" });
+  expect(api).toMatchObject({
+    total_revenue: "79.90",
+    collected_amount: "40.10",
+    outstanding_amount: "39.80",
+  });
   await expect(page.getByTestId("kpi-revenue")).toHaveText("R$79.90");
   await expect(page.getByTestId("kpi-collected")).toHaveText("R$40.10");
   await expect(page.getByTestId("kpi-outstanding")).toHaveText("R$39.80");
@@ -59,7 +73,10 @@ test("admin resolves a divergence from the dashboard and the totals follow", asy
   const { s, divergence } = await seedLedger();
   await openDashboard(page, s);
 
-  await page.getByTestId("divergences").getByRole("link", { name: /Bia Divergence/ }).click();
+  await page
+    .getByTestId("divergences")
+    .getByRole("link", { name: /Bia Divergence/ })
+    .click();
   await expect(page.getByTestId("admin-order-status")).toHaveText("Delivered · unpaid");
   await page.getByRole("button", { name: "Mark as paid" }).click();
   await expect(page.getByTestId("admin-order-status")).toHaveText("Settled");
@@ -71,7 +88,9 @@ test("admin resolves a divergence from the dashboard and the totals follow", asy
   expect((await serverOrder(s, divergence)).status_classification).toBe("SETTLED");
 });
 
-test("a stale admin action gets the conflict message and the fresh state, then succeeds", async ({ page }) => {
+test("a stale admin action gets the conflict message and the fresh state, then succeeds", async ({
+  page,
+}) => {
   const { s, unpaid } = await seedLedger();
   await logInViaUi(page, s.admin);
   await page.goto(`/promotion/admin/order?id=${s.promotionId}&order=${unpaid}`);
@@ -81,7 +100,9 @@ test("a stale admin action gets the conflict message and the fresh state, then s
   await adminTransition(s, unpaid, "payment", { action: "MARK_PAID", expected_version: 1 });
 
   await page.getByRole("button", { name: "Mark as delivered" }).click(); // sent with stale v1
-  await expect(page.locator("main").getByRole("alert")).toContainText("This order was changed by someone else");
+  await expect(page.locator("main").getByRole("alert")).toContainText(
+    "This order was changed by someone else",
+  );
   await expect(page.getByTestId("admin-order-status")).toHaveText("Paid · to deliver"); // reloaded
 
   await page.getByRole("button", { name: "Mark as delivered" }).click(); // deliberate retry, v2
@@ -100,7 +121,9 @@ test("a viewer sees the dashboard read-only: no actions, no audit trail", async 
   await expect(page.getByRole("button", { name: "Mark as paid" })).toHaveCount(0);
 
   await page.goto(`/promotion/admin/audit?id=${s.promotionId}`);
-  await expect(page.locator("main").getByRole("alert")).toHaveText("You do not have permission to do this.");
+  await expect(page.locator("main").getByRole("alert")).toHaveText(
+    "You do not have permission to do this.",
+  );
 });
 
 test("a seller has no access to the dashboard", async ({ page }) => {
@@ -111,5 +134,7 @@ test("a seller has no access to the dashboard", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Dashboard" })).toHaveCount(0);
 
   await page.goto(`/promotion/admin?id=${s.promotionId}`);
-  await expect(page.locator("main").getByRole("alert")).toHaveText("You do not have permission to do this.");
+  await expect(page.locator("main").getByRole("alert")).toHaveText(
+    "You do not have permission to do this.",
+  );
 });

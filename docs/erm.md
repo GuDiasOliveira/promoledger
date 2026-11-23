@@ -146,17 +146,17 @@ Multi-tenant organizational boundary (schools, churches, student committees, NGO
 
 A specific fundraising campaign with a defined timeline and batch delivery date.
 
-| Column             | Type           | Constraints                                                           | Description                                           |
-| ------------------ | -------------- | --------------------------------------------------------------------- | ----------------------------------------------------- |
-| `id`               | `UUID`         | PK, default `gen_random_uuid()`                                       | Unique promotion identifier.                          |
-| `name`             | `VARCHAR(255)` | NOT NULL, CHECK (`char_length(trim(name)) > 0`)                       | Campaign title (e.g., "Easter Chocolate Drive 2026"). |
-| `status`           | `VARCHAR(32)`  | NOT NULL, default `'DRAFT'`, CHECK in `('DRAFT', 'ACTIVE', 'CLOSED')` | Operational state of the campaign.                    |
-| `sales_start_date` | `DATE`         | NOT NULL                                                              | Date when sellers can begin collecting orders.        |
-| `last_sales_date`  | `DATE`         | NOT NULL, CHECK (`last_sales_date >= sales_start_date`)               | Final cutoff date for order capture.                  |
-| `delivery_date`    | `DATE`         | NOT NULL, CHECK (`delivery_date >= last_sales_date`)                  | Scheduled centralized batch fulfillment day.          |
+| Column             | Type           | Constraints                                                                        | Description                                                                                                                   |
+| ------------------ | -------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | `UUID`         | PK, default `gen_random_uuid()`                                                    | Unique promotion identifier.                                                                                                  |
+| `name`             | `VARCHAR(255)` | NOT NULL, CHECK (`char_length(trim(name)) > 0`)                                    | Campaign title (e.g., "Easter Chocolate Drive 2026").                                                                         |
+| `status`           | `VARCHAR(32)`  | NOT NULL, default `'DRAFT'`, CHECK in `('DRAFT', 'ACTIVE', 'CLOSED')`              | Operational state of the campaign.                                                                                            |
+| `sales_start_date` | `DATE`         | NOT NULL                                                                           | Date when sellers can begin collecting orders.                                                                                |
+| `last_sales_date`  | `DATE`         | NOT NULL, CHECK (`last_sales_date >= sales_start_date`)                            | Final cutoff date for order capture.                                                                                          |
+| `delivery_date`    | `DATE`         | NOT NULL, CHECK (`delivery_date >= last_sales_date`)                               | Scheduled centralized batch fulfillment day.                                                                                  |
 | `currency`         | `CHAR(3)`      | NOT NULL, CHECK in `('BRL','USD','EUR','GBP','CHF','SEK','NOK','DKK','PLN','CZK')` | ISO 4217 currency of every amount in the promotion (prices, orders, reconciliation). Immutable once the promotion has orders. |
-| `created_at`       | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                                             | Record creation timestamp.                            |
-| `updated_at`       | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                                             | Last modification timestamp.                          |
+| `created_at`       | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                                                          | Record creation timestamp.                                                                                                    |
+| `updated_at`       | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                                                          | Last modification timestamp.                                                                                                  |
 
 > **Currency:** the MVP supports only ISO 4217 currencies with exactly 2 minor units (fits `NUMERIC(10, 2)`), covering Brazil, the US and Europe. The value is chosen at creation and locked once any order exists (`400 CURRENCY_LOCKED`).
 >
@@ -200,14 +200,14 @@ Authenticated user accounts. Note that global system roles do **not** live here;
 
 Contextual RBAC membership entity linking a user to a specific promotion.
 
-| Column         | Type          | Constraints                                       | Description                                                                |
-| -------------- | ------------- | ------------------------------------------------- | -------------------------------------------------------------------------- |
-| `id`           | `UUID`        | PK, default `gen_random_uuid()`                   | Membership identifier.                                                     |
-| `user_id`      | `UUID`        | NOT NULL, FK -> `USER(id)` ON DELETE CASCADE      | Associated user.                                                           |
-| `promotion_id` | `UUID`        | NOT NULL, FK -> `PROMOTION(id)` ON DELETE CASCADE | Contextual campaign.                                                       |
+| Column         | Type          | Constraints                                                                                                         | Description                                                                |
+| -------------- | ------------- | ------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `id`           | `UUID`        | PK, default `gen_random_uuid()`                                                                                     | Membership identifier.                                                     |
+| `user_id`      | `UUID`        | NOT NULL, FK -> `USER(id)` ON DELETE CASCADE                                                                        | Associated user.                                                           |
+| `promotion_id` | `UUID`        | NOT NULL, FK -> `PROMOTION(id)` ON DELETE CASCADE                                                                   | Contextual campaign.                                                       |
 | `roles`        | `TEXT[]`      | NOT NULL, CHECK (`cardinality(roles) > 0`), CHECK (`roles <@ ARRAY['seller','promotion_admin','promotion_viewer']`) | Non-empty array of roles: `seller`, `promotion_admin`, `promotion_viewer`. |
-| `revoked_at`   | `TIMESTAMPTZ` | NULL                                              | Soft revocation timestamp. `NULL` = active membership.                     |
-| `created_at`   | `TIMESTAMPTZ` | NOT NULL, default `NOW()`                         | Membership assignment timestamp.                                           |
+| `revoked_at`   | `TIMESTAMPTZ` | NULL                                                                                                                | Soft revocation timestamp. `NULL` = active membership.                     |
+| `created_at`   | `TIMESTAMPTZ` | NOT NULL, default `NOW()`                                                                                           | Membership assignment timestamp.                                           |
 
 > **Constraint:** `UNIQUE (user_id, promotion_id)` ensures a user cannot have duplicate memberships in the same campaign.
 >
@@ -238,13 +238,13 @@ Catalog items configured for a promotion. Managed exclusively by `promotion_admi
 
 Buyer registered within a campaign context.
 
-| Column         | Type           | Constraints                                       | Description                       |
-| -------------- | -------------- | ------------------------------------------------- | --------------------------------- |
-| `id`           | `UUID`         | PK, default `gen_random_uuid()`                   | Customer identifier.              |
-| `promotion_id` | `UUID`         | NOT NULL, FK -> `PROMOTION(id)` ON DELETE CASCADE | Context campaign.                 |
-| `name`         | `VARCHAR(255)` | NOT NULL, CHECK (`char_length(trim(name)) > 0`)   | Customer full name.               |
+| Column         | Type           | Constraints                                       | Description                                  |
+| -------------- | -------------- | ------------------------------------------------- | -------------------------------------------- |
+| `id`           | `UUID`         | PK, default `gen_random_uuid()`                   | Customer identifier.                         |
+| `promotion_id` | `UUID`         | NOT NULL, FK -> `PROMOTION(id)` ON DELETE CASCADE | Context campaign.                            |
+| `name`         | `VARCHAR(255)` | NOT NULL, CHECK (`char_length(trim(name)) > 0`)   | Customer full name.                          |
 | `contact`      | `VARCHAR(255)` | NULL                                              | Optional phone (any messaging app) or email. |
-| `created_at`   | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                         | Creation timestamp.               |
+| `created_at`   | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                         | Creation timestamp.                          |
 
 > **Offline creation:** `id` may be supplied by the client as a UUIDv4, so an offline-captured customer can be referenced by a queued order before either is synced. Re-sending the same `id` with the same data is an idempotent no-op.
 
@@ -256,20 +256,20 @@ Buyer registered within a campaign context.
 
 Core transactional ledger entity tracking a customer purchase mediated by a field seller.
 
-| Column             | Type          | Constraints                                               | Description                                                       |
-| ------------------ | ------------- | --------------------------------------------------------- | ----------------------------------------------------------------- |
-| `id`               | `UUID`        | PK, default `gen_random_uuid()`                           | Order identifier.                                                 |
-| `promotion_id`     | `UUID`        | NOT NULL, FK -> `PROMOTION(id)` ON DELETE RESTRICT        | Campaign partition boundary.                                      |
-| `seller_member_id` | `UUID`        | NOT NULL, FK -> `PROMOTION_MEMBER(id)` ON DELETE RESTRICT | Attribution to the field seller.                                  |
-| `customer_id`      | `UUID`        | NOT NULL, FK -> `CUSTOMER(id)` ON DELETE RESTRICT         | Target buyer.                                                     |
-| `idempotency_key`  | `VARCHAR(64)` | NOT NULL, UNIQUE                                          | Client-generated UUIDv4 preventing duplicate network submissions. |
-| `idempotency_fingerprint` | `CHAR(64)` | NOT NULL                                     | SHA-256 of the canonical create payload (promotion, seller, customer, sorted items, `mark_paid_now`). Distinguishes a safe retry from a key reused with a different payload. |
-| `version`          | `INTEGER`     | NOT NULL, default `1`                                     | Incremental counter for Optimistic Concurrency Control (OCC).     |
-| `paid_at`          | `TIMESTAMPTZ` | NULL                                                      | Timestamp of manual payment confirmation (cash, bank transfer or instant payment). |
-| `delivered_at`     | `TIMESTAMPTZ` | NULL                                                      | Timestamp of physical handover of goods.                          |
-| `cancelled_at`     | `TIMESTAMPTZ` | NULL                                                      | Timestamp if order was voided prior to fulfillment.               |
-| `created_at`       | `TIMESTAMPTZ` | NOT NULL, default `NOW()`                                 | Order placement timestamp.                                        |
-| `updated_at`       | `TIMESTAMPTZ` | NOT NULL, default `NOW()`                                 | Last state transition or mutation.                                |
+| Column                    | Type          | Constraints                                               | Description                                                                                                                                                                  |
+| ------------------------- | ------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                      | `UUID`        | PK, default `gen_random_uuid()`                           | Order identifier.                                                                                                                                                            |
+| `promotion_id`            | `UUID`        | NOT NULL, FK -> `PROMOTION(id)` ON DELETE RESTRICT        | Campaign partition boundary.                                                                                                                                                 |
+| `seller_member_id`        | `UUID`        | NOT NULL, FK -> `PROMOTION_MEMBER(id)` ON DELETE RESTRICT | Attribution to the field seller.                                                                                                                                             |
+| `customer_id`             | `UUID`        | NOT NULL, FK -> `CUSTOMER(id)` ON DELETE RESTRICT         | Target buyer.                                                                                                                                                                |
+| `idempotency_key`         | `VARCHAR(64)` | NOT NULL, UNIQUE                                          | Client-generated UUIDv4 preventing duplicate network submissions.                                                                                                            |
+| `idempotency_fingerprint` | `CHAR(64)`    | NOT NULL                                                  | SHA-256 of the canonical create payload (promotion, seller, customer, sorted items, `mark_paid_now`). Distinguishes a safe retry from a key reused with a different payload. |
+| `version`                 | `INTEGER`     | NOT NULL, default `1`                                     | Incremental counter for Optimistic Concurrency Control (OCC).                                                                                                                |
+| `paid_at`                 | `TIMESTAMPTZ` | NULL                                                      | Timestamp of manual payment confirmation (cash, bank transfer or instant payment).                                                                                           |
+| `delivered_at`            | `TIMESTAMPTZ` | NULL                                                      | Timestamp of physical handover of goods.                                                                                                                                     |
+| `cancelled_at`            | `TIMESTAMPTZ` | NULL                                                      | Timestamp if order was voided prior to fulfillment.                                                                                                                          |
+| `created_at`              | `TIMESTAMPTZ` | NOT NULL, default `NOW()`                                 | Order placement timestamp.                                                                                                                                                   |
+| `updated_at`              | `TIMESTAMPTZ` | NOT NULL, default `NOW()`                                 | Last state transition or mutation.                                                                                                                                           |
 
 > **Invariants & Checks:**
 >
@@ -302,17 +302,17 @@ Line items of an order with mandatory price snapshotting.
 
 Append-only immutable event log capturing all state changes and reversions.
 
-| Column            | Type          | Constraints                                                                                                          | Description                                                                    |
-| ----------------- | ------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `id`              | `UUID`        | PK, default `gen_random_uuid()`                                                                                      | Event log entry ID.                                                            |
-| `order_id`        | `UUID`        | NOT NULL, FK -> `ORDER(id)` ON DELETE CASCADE                                                                        | Target order.                                                                  |
-| `actor_member_id` | `UUID`        | NOT NULL, FK -> `PROMOTION_MEMBER(id)` ON DELETE RESTRICT                                                            | Actor who initiated the transition.                                            |
-| `event_type`      | `VARCHAR(32)` | NOT NULL, CHECK in `('PAYMENT_MARKED', 'PAYMENT_REVOKED', 'DELIVERY_MARKED', 'DELIVERY_REVOKED', 'ORDER_CANCELLED')` | Transition type.                                                               |
-| `reason`          | `TEXT`        | NULL, CHECK (`event_type NOT IN ('PAYMENT_REVOKED','DELIVERY_REVOKED','ORDER_CANCELLED') OR coalesce(char_length(trim(reason)), 0) > 0`) | Mandatory explanation when revoking a payment/delivery or cancelling an order. |
-| `idempotency_key` | `VARCHAR(64)` | NULL, UNIQUE                                                                                                         | `Idempotency-Key` of the transition request that produced this event. `NULL` for the `PAYMENT_MARKED` event written at order creation (`mark_paid_now`), which is protected by `ORDER.idempotency_key`. |
-| `idempotency_fingerprint` | `CHAR(64)` | NULL, CHECK (`(idempotency_key IS NULL) = (idempotency_fingerprint IS NULL)`)                                  | SHA-256 of the canonical transition payload (order, actor, event type, expected version, reason). |
-| `seq`             | `BIGINT`      | NOT NULL, `GENERATED ALWAYS AS IDENTITY`, UNIQUE                                                                    | Monotonic append order. The audit stream is ordered by `seq`, never by `created_at` alone (`NOW()` is per-transaction and can tie). |
-| `created_at`      | `TIMESTAMPTZ` | NOT NULL, default `NOW()`                                                                                            | Immutable event timestamp.                                                     |
+| Column                    | Type          | Constraints                                                                                                                              | Description                                                                                                                                                                                             |
+| ------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                      | `UUID`        | PK, default `gen_random_uuid()`                                                                                                          | Event log entry ID.                                                                                                                                                                                     |
+| `order_id`                | `UUID`        | NOT NULL, FK -> `ORDER(id)` ON DELETE CASCADE                                                                                            | Target order.                                                                                                                                                                                           |
+| `actor_member_id`         | `UUID`        | NOT NULL, FK -> `PROMOTION_MEMBER(id)` ON DELETE RESTRICT                                                                                | Actor who initiated the transition.                                                                                                                                                                     |
+| `event_type`              | `VARCHAR(32)` | NOT NULL, CHECK in `('PAYMENT_MARKED', 'PAYMENT_REVOKED', 'DELIVERY_MARKED', 'DELIVERY_REVOKED', 'ORDER_CANCELLED')`                     | Transition type.                                                                                                                                                                                        |
+| `reason`                  | `TEXT`        | NULL, CHECK (`event_type NOT IN ('PAYMENT_REVOKED','DELIVERY_REVOKED','ORDER_CANCELLED') OR coalesce(char_length(trim(reason)), 0) > 0`) | Mandatory explanation when revoking a payment/delivery or cancelling an order.                                                                                                                          |
+| `idempotency_key`         | `VARCHAR(64)` | NULL, UNIQUE                                                                                                                             | `Idempotency-Key` of the transition request that produced this event. `NULL` for the `PAYMENT_MARKED` event written at order creation (`mark_paid_now`), which is protected by `ORDER.idempotency_key`. |
+| `idempotency_fingerprint` | `CHAR(64)`    | NULL, CHECK (`(idempotency_key IS NULL) = (idempotency_fingerprint IS NULL)`)                                                            | SHA-256 of the canonical transition payload (order, actor, event type, expected version, reason).                                                                                                       |
+| `seq`                     | `BIGINT`      | NOT NULL, `GENERATED ALWAYS AS IDENTITY`, UNIQUE                                                                                         | Monotonic append order. The audit stream is ordered by `seq`, never by `created_at` alone (`NOW()` is per-transaction and can tie).                                                                     |
+| `created_at`              | `TIMESTAMPTZ` | NOT NULL, default `NOW()`                                                                                                                | Immutable event timestamp.                                                                                                                                                                              |
 
 > **Why `coalesce` in the reason CHECK:** `char_length(trim(NULL))` is `NULL`, and a `NULL` CHECK result passes — without `coalesce`, a revoke/cancel with no reason would be accepted.
 >
@@ -326,18 +326,18 @@ Append-only immutable event log capturing all state changes and reversions.
 
 Personal access token for read-only integrations (e.g. the MCP server, Slice 5).
 
-| Column         | Type           | Constraints                                       | Description                                                        |
-| -------------- | -------------- | ------------------------------------------------- | ------------------------------------------------------------------ |
-| `id`           | `UUID`         | PK, default `gen_random_uuid()`                   | Token identifier.                                                  |
-| `user_id`      | `UUID`         | NOT NULL, FK -> `USER(id)` ON DELETE CASCADE      | Owner; the token reads exactly what this user can read.            |
-| `name`         | `VARCHAR(100)` | NOT NULL, CHECK (`char_length(trim(name)) > 0`)   | Label chosen by the user (e.g. "Claude Desktop").                  |
-| `token_hash`   | `CHAR(64)`     | NOT NULL, UNIQUE                                  | SHA-256 of the token. **The plain token is never stored.**         |
-| `prefix`       | `VARCHAR(16)`  | NOT NULL                                          | First characters (`pl_xxxxxxx`) to recognise the token in lists.   |
-| `scope`        | `VARCHAR(16)`  | NOT NULL, default `'read'`, CHECK in `('read')`   | Only `read` exists: any non-GET request with the token is refused. |
-| `expires_at`   | `TIMESTAMPTZ`  | NOT NULL                                          | Mandatory expiry (1–365 days).                                     |
-| `last_used_at` | `TIMESTAMPTZ`  | NULL                                              | Updated at most once per minute.                                   |
-| `revoked_at`   | `TIMESTAMPTZ`  | NULL                                              | Soft revocation (kept for the record of past usage).               |
-| `created_at`   | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                         | Creation timestamp.                                                |
+| Column         | Type           | Constraints                                     | Description                                                        |
+| -------------- | -------------- | ----------------------------------------------- | ------------------------------------------------------------------ |
+| `id`           | `UUID`         | PK, default `gen_random_uuid()`                 | Token identifier.                                                  |
+| `user_id`      | `UUID`         | NOT NULL, FK -> `USER(id)` ON DELETE CASCADE    | Owner; the token reads exactly what this user can read.            |
+| `name`         | `VARCHAR(100)` | NOT NULL, CHECK (`char_length(trim(name)) > 0`) | Label chosen by the user (e.g. "Claude Desktop").                  |
+| `token_hash`   | `CHAR(64)`     | NOT NULL, UNIQUE                                | SHA-256 of the token. **The plain token is never stored.**         |
+| `prefix`       | `VARCHAR(16)`  | NOT NULL                                        | First characters (`pl_xxxxxxx`) to recognise the token in lists.   |
+| `scope`        | `VARCHAR(16)`  | NOT NULL, default `'read'`, CHECK in `('read')` | Only `read` exists: any non-GET request with the token is refused. |
+| `expires_at`   | `TIMESTAMPTZ`  | NOT NULL                                        | Mandatory expiry (1–365 days).                                     |
+| `last_used_at` | `TIMESTAMPTZ`  | NULL                                            | Updated at most once per minute.                                   |
+| `revoked_at`   | `TIMESTAMPTZ`  | NULL                                            | Soft revocation (kept for the record of past usage).               |
+| `created_at`   | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                       | Creation timestamp.                                                |
 
 > **Format & hashing:** tokens are `pl_` + 256 random bits (URL-safe base64), shown to the user once. A high-entropy random secret needs no slow KDF, so SHA-256 is used (passwords keep Argon2id).
 

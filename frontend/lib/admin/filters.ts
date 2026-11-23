@@ -32,7 +32,9 @@ export function parseOrderFilters(params: URLSearchParams): OrderFilters {
       : null,
     sellerMemberId: uuidOrNull(params.get("seller")),
     customerId: uuidOrNull(params.get("customer")),
-    customerName: uuidOrNull(params.get("customer")) ? (params.get("customerName")?.slice(0, 255) ?? null) : null,
+    customerName: uuidOrNull(params.get("customer"))
+      ? (params.get("customerName")?.slice(0, 255) ?? null)
+      : null,
     page: Number.isSafeInteger(page) && page >= 1 ? page : 1,
   };
 }

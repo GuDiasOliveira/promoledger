@@ -29,7 +29,12 @@ afterEach(async () => {
 });
 
 async function offlineOrder(markPaidNow = false): Promise<CachedOrder> {
-  const customer = await createCustomerOffline(db, { userId: USER, promotionId: PROMO, name: "Ana", contact: null });
+  const customer = await createCustomerOffline(db, {
+    userId: USER,
+    promotionId: PROMO,
+    name: "Ana",
+    contact: null,
+  });
   return createOrderOffline(db, {
     userId: USER,
     promotionId: PROMO,
@@ -42,7 +47,8 @@ async function offlineOrder(markPaidNow = false): Promise<CachedOrder> {
 
 const queue = () => db.outbox.orderBy("seq").toArray();
 const transitions = async () => (await queue()).filter((i) => i.kind === "transition");
-const bodyOf = (i: OutboxItem) => i.payload.body as { action?: string; expected_version: number; reason?: string };
+const bodyOf = (i: OutboxItem) =>
+  i.payload.body as { action?: string; expected_version: number; reason?: string };
 
 describe("enqueueTransition", () => {
   it("chains expected versions on an order that was never sent", async () => {
@@ -64,16 +70,23 @@ describe("enqueueTransition", () => {
 
   it("knows 'paid now' at creation: payment cannot be marked twice", async () => {
     const order = await offlineOrder(true);
-    await expect(enqueueTransition(db, order.key, "MARK_PAID")).rejects.toBeInstanceOf(TransitionNotAllowed);
+    await expect(enqueueTransition(db, order.key, "MARK_PAID")).rejects.toBeInstanceOf(
+      TransitionNotAllowed,
+    );
     await enqueueTransition(db, order.key, "MARK_DELIVERED");
     expect(bodyOf((await transitions())[0]).expected_version).toBe(1);
   });
 
   it("requires a non-blank reason for revocations and cancellation", async () => {
     const order = await offlineOrder();
-    await expect(enqueueTransition(db, order.key, "CANCEL", "  ")).rejects.toThrow("requires a reason");
+    await expect(enqueueTransition(db, order.key, "CANCEL", "  ")).rejects.toThrow(
+      "requires a reason",
+    );
     await enqueueTransition(db, order.key, "CANCEL", "  Customer gave up ");
-    expect(bodyOf((await transitions())[0])).toEqual({ expected_version: 1, reason: "Customer gave up" });
+    expect(bodyOf((await transitions())[0])).toEqual({
+      expected_version: 1,
+      reason: "Customer gave up",
+    });
   });
 
   it("refuses new actions while the order has an unresolved conflict", async () => {
@@ -82,7 +95,9 @@ describe("enqueueTransition", () => {
     const [action] = await transitions();
     await db.outbox.update(action.seq!, { status: "conflict" });
 
-    await expect(enqueueTransition(db, order.key, "MARK_PAID")).rejects.toThrow("Resolve the conflict first");
+    await expect(enqueueTransition(db, order.key, "MARK_PAID")).rejects.toThrow(
+      "Resolve the conflict first",
+    );
   });
 });
 
@@ -101,10 +116,18 @@ describe("dependency holds for order actions", () => {
       now: () => 0,
       random: () => 0.5,
       send: async (item) => {
-        if (item.kind === "transition" && item.localRef === a.key && bodyOf(item).action === "MARK_PAID") {
+        if (
+          item.kind === "transition" &&
+          item.localRef === a.key &&
+          bodyOf(item).action === "MARK_PAID"
+        ) {
           throw toApiError(409, { status: 409, code: "CONCURRENCY_CONFLICT", detail: "x" });
         }
-        sent.push(item.kind === "transition" ? `${item.localRef === a.key ? "A" : "B"}:${bodyOf(item).action}` : item.kind);
+        sent.push(
+          item.kind === "transition"
+            ? `${item.localRef === a.key ? "A" : "B"}:${bodyOf(item).action}`
+            : item.kind,
+        );
       },
     });
 
@@ -122,7 +145,12 @@ describe("dependency holds for order actions", () => {
 describe("displayed state", () => {
   it("never applies a rejected action (the badge must not claim an unreached state)", async () => {
     const order = await offlineOrder();
-    await db.orders.update(order.key, { serverId: "srv-1", sync: "synced", version: 2, paidAt: "2026-03-30T10:00:00Z" });
+    await db.orders.update(order.key, {
+      serverId: "srv-1",
+      sync: "synced",
+      version: 2,
+      paidAt: "2026-03-30T10:00:00Z",
+    });
     await enqueueTransition(db, order.key, "MARK_DELIVERED");
     const [action] = await transitions();
     await db.outbox.update(action.seq!, { status: "conflict" });
@@ -147,7 +175,12 @@ describe("conflict resolution", () => {
 
   it("reapply: rebases on the server state with a NEW key and fresh version", async () => {
     const { order, action } = await conflictedDelivery();
-    const server = { version: 2, paidAt: "2026-03-30T10:00:00Z", deliveredAt: null, cancelledAt: null };
+    const server = {
+      version: 2,
+      paidAt: "2026-03-30T10:00:00Z",
+      deliveredAt: null,
+      cancelledAt: null,
+    };
 
     const plan = await reapplyOrderActions(db, order.key, server);
 
@@ -161,7 +194,12 @@ describe("conflict resolution", () => {
 
   it("reapply with everything already done leaves nothing queued", async () => {
     const { order } = await conflictedDelivery();
-    const server = { version: 2, paidAt: null, deliveredAt: "2026-03-30T10:00:00Z", cancelledAt: null };
+    const server = {
+      version: 2,
+      paidAt: null,
+      deliveredAt: "2026-03-30T10:00:00Z",
+      cancelledAt: null,
+    };
 
     const plan = await reapplyOrderActions(db, order.key, server);
 
@@ -171,7 +209,12 @@ describe("conflict resolution", () => {
 
   it("discard drops the order's actions and keeps the server state", async () => {
     const { order } = await conflictedDelivery();
-    const server = { version: 2, paidAt: "2026-03-30T10:00:00Z", deliveredAt: null, cancelledAt: null };
+    const server = {
+      version: 2,
+      paidAt: "2026-03-30T10:00:00Z",
+      deliveredAt: null,
+      cancelledAt: null,
+    };
 
     await discardOrderActions(db, order.key, server);
 
