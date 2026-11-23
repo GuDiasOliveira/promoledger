@@ -10,6 +10,11 @@ trail behind every status change. See [`docs/prd.md`](docs/prd.md) for the probl
 [`docs/erm.md`](docs/erm.md) for the data model and invariants, and
 [`docs/api.md`](docs/api.md) for the API contract.
 
+The project was built spec-first and AI-first: specifications written before any code, then
+implemented end to end by an AI coding agent in reviewed vertical slices. See
+[How this was built](#how-this-was-built-spec-driven-ai-first) for the process and the
+trade-offs behind it.
+
 ## What runs where
 
 ```
@@ -200,6 +205,93 @@ After `down -v`, re-run `uv run alembic upgrade head` and the seed.
 | `409 CONCURRENCY_CONFLICT`                       | Working as designed: `expected_version` is stale. Reload the order and act again.       |
 | `address already in use` on `:8000` or `:3000`   | A previous dev server is still alive. `lsof -nP -iTCP:8000 -sTCP:LISTEN`, then kill it. |
 | Frontend 404s on `/api/v1/*`                     | The backend is not on `:8000`, or `BACKEND_URL` points elsewhere.                       |
+
+## How this was built: spec-driven, AI-first
+
+PromoLedger was built **top-down**: business rules and guarantees first, implementation last.
+I wrote the specifications; an AI coding agent wrote the code, one vertical slice at a time,
+against those specifications. This is the
+[spec-driven development](https://github.blog/ai-and-ml/generative-ai/spec-driven-development-with-ai-get-started-with-a-new-open-source-toolkit/)
+approach: the spec, not the prompt, is the source of truth, and the agent is held to it.
+
+### 1. Specifications before code
+
+The first commit contains no code: about 700 lines of specification plus the agent's operating
+manual. I wrote them with assistance from Gemini in the Antigravity IDE.
+
+| Document                     | Owns                                                                             |
+| ---------------------------- | -------------------------------------------------------------------------------- |
+| [`docs/prd.md`](docs/prd.md) | The problem, personas, contextual RBAC, user flows, NFRs, scope and what is out. |
+| [`docs/erm.md`](docs/erm.md) | Entities, data dictionary, the order state/reconciliation matrix, invariants.    |
+| [`docs/api.md`](docs/api.md) | Routes, payloads, money representation, pagination, RFC 7807 error codes.        |
+| [`CLAUDE.md`](CLAUDE.md)     | How the agent must work: workflow, domain invariants, stack rules, known traps.  |
+
+The order mattered. Writing the ERM before the API forced decisions such as _corrections are
+compensating events, never updates_ and _prices are snapshotted at insert_ to be made once, in
+the data model, rather than rediscovered in every endpoint.
+
+### 2. Implementation in vertical slices with Claude Code
+
+The whole codebase (backend, frontend PWA, MCP server, seed script) was then implemented with
+[Claude Code](https://claude.com/claude-code), running Claude models, over a few days. Each
+slice in the [roadmap](CLAUDE.md#5-mvp-execution-roadmap-vertical-slices) went through the
+same loop, which `CLAUDE.md` makes mandatory:
+
+1. **Read the specs.** The agent reads the relevant `docs/` files before planning.
+2. **Propose a plan, then stop.** A short slice plan: files, migrations, endpoints, tests.
+3. **Human gate.** I approved or corrected the plan, and made the design calls it raised.
+4. **Implement with tests**, end to end: migration, model, service, router, tests; or screen,
+   offline logic, i18n, unit and E2E tests.
+5. **Keep the specs true.** If the slice changed a contract, the spec changed in the same
+   commit.
+
+Step 5 is visible in the history: every one of the 11 slice commits also edits `docs/` or
+`CLAUDE.md`. The specs are living documents, not a kickoff artefact that drifts from the code.
+
+`CLAUDE.md` also acts as the project's memory. Each time a slice hit a non-obvious problem
+(pt-BR's CLDR plural rule for zero, Next.js keeping hidden routes mounted with their state,
+mobile overflow pushing fixed bars off-screen) it was written down as a **Known Trap**, so no
+later slice paid for it twice.
+
+### 3. Where human attention went, and what replaced line-by-line review
+
+My time went into the specifications, the slice plans and the design decisions, not into
+reading every generated line. That is a deliberate trade-off, and it only holds because
+correctness is checked by machines rather than by eye:
+
+- **Invariants enforced below the application.** Money is `NUMERIC(10,2)` and exact strings,
+  never floats. `ORDER_AUDIT_EVENT` is append-only through a Postgres trigger, so even buggy
+  code cannot rewrite history.
+- **Tests against real PostgreSQL**, never SQLite: 158 backend tests exercise the actual
+  `TEXT[]` columns, partial unique indexes, OCC and idempotency paths.
+- **No hand-written contract.** Frontend API types are generated from the FastAPI OpenAPI
+  schema, so frontend and backend cannot silently disagree.
+- **Behaviour tested end to end.** Playwright drives a production build against a fresh
+  database, including offline order capture, outbox sync and conflict resolution.
+- **Guard-rail tests for cross-cutting rules:** translation key parity across the three
+  locales, every page registered in the offline shell, and no customer data ever returned by
+  the MCP server.
+
+### 4. Architecture decisions & trade-offs
+
+| Decision                                                                          | Why                                                                                                  | Cost accepted                                                                    |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Optimistic concurrency (`version`, `409`) and **user-resolved** conflicts         | Field sellers work offline; silently auto-rebasing a payment or delivery could misstate money.       | One more decision for the user ("Reapply" or "Discard") when a conflict happens. |
+| Client-generated `Idempotency-Key`, fixed when the action is queued               | Flaky mobile networks retry; a retry must never create a second order or audit event.                | An idempotency table and key handling on every mutation.                         |
+| Append-only audit trail; corrections as `*_REVOKED` events                        | A ledger is only trustworthy if history cannot be edited.                                            | A typo is fixed by a compensating event, never by an edit.                       |
+| Exact decimal money everywhere (`NUMERIC`, strings in JSON, `bigint` cents in TS) | Floating-point error is unacceptable in a reconciliation tool.                                       | Custom money parsing and formatting instead of plain numbers.                    |
+| Offline-first seller PWA (IndexedDB + outbox), **online-only** admin screens      | Sellers are in the field; admins reconcile at a desk. Offline complexity only where it pays.         | Admins cannot work offline.                                                      |
+| Static routes with `?id=` instead of dynamic segments                             | One cached HTML shell serves every promotion offline.                                                | Less conventional URLs.                                                          |
+| Single origin: Next.js rewrites `/api/v1/*` to FastAPI                            | No CORS, one URL exposed to clients, same-origin cookies and service worker scope.                   | The Next.js server sits in the API request path.                                 |
+| MCP server as a **client of the REST API** with read-only tokens                  | Reuses RBAC instead of duplicating it; the API refuses writes, so a modified MCP still cannot write. | New data for AI agents needs a new GET endpoint first.                           |
+| Contextual RBAC per promotion (`PROMOTION_MEMBER.roles`) instead of global roles  | The same person sells in one campaign and administers another.                                       | Role checks need the promotion context on every request.                         |
+
+### 5. Known limits
+
+- Commits are one per slice, so the history shows outcomes rather than the iteration inside
+  each slice.
+- There is no CI pipeline or hosted deployment yet; every check above runs locally with the
+  commands in [Verification commands](#verification-commands).
 
 ## Repository layout
 
