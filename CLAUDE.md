@@ -91,6 +91,7 @@ docker-compose.yml      # Local dev services (PostgreSQL 16)
 - **Lint / Types / Unit tests / Build:** `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`
 - **Format:** `npm run format` / `npm run format:check` (Prettier over the whole repo, config in root `.prettierrc.json`, width 100).
 - **E2E (Playwright, production build):** `npm run test:e2e` — starts its own backend (`:8001`) and frontend (`:3001`) and recreates the `promoledger_e2e` database on every run (never `promoledger_test`).
+- **README screenshots:** `npm run screenshots` — same stack as E2E, seeded with `seed.py --lang en`, writes PNGs/GIFs to `docs/screenshots/` (needs `ffmpeg`). Not a check: not in `test:e2e` or CI. Re-run and commit the images when a pictured screen changes.
 - **PWA icons:** edit `public/icons/icon.svg`, then `node scripts/gen-icons.mjs`.
 
 ### CI (GitHub Actions)

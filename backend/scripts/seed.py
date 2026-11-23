@@ -18,6 +18,7 @@ Needs the API running (default http://localhost:8000):
     uv run python scripts/seed.py --grant-to you@example.com
     uv run python scripts/seed.py --new          # fresh promotion, not a top-up
     uv run python scripts/seed.py --spread-days 0
+    uv run python scripts/seed.py --lang en      # English names (README screenshots)
 
 Re-running is safe: accounts, institution, promotion and catalog are
 find-or-created; orders are always appended.
@@ -42,8 +43,6 @@ API_PREFIX = "/api/v1"
 EMAIL_DOMAIN = "promoledger.example"
 SEED_PASSWORD = "promoledger-seed-2026"
 
-INSTITUTION_NAME = "Colegio Santa Clara"
-PROMOTION_NAME = "Campanha de Pascoa (seed)"
 CURRENCY = "BRL"
 MCP_TOKEN_NAME = "Seed - MCP"
 
@@ -80,7 +79,7 @@ class SeedProduct:
     active: bool = True
 
 
-PRODUCTS = (
+PRODUCTS_PT = (
     SeedProduct("brigadeiro", "Caixa de brigadeiros (12 un.)", "38.00", "Receita tradicional."),
     SeedProduct("beijinho", "Caixa de beijinhos (12 un.)", "38.00", "Coco fresco ralado."),
     SeedProduct("bolo", "Bolo de pote (300 g)", "22.50", "Sabores do dia."),
@@ -160,9 +159,54 @@ ORDERS = (
     SeedOrder(0, "seller1", 14, (("brigadeiro", 5),), "unpaid"),
 )
 
-REASON_PAYMENT_REVOKED = "Comprovante de transferencia nao localizado na conciliacao bancaria."
-REASON_DELIVERY_REVOKED = "Caixa devolvida pelo cliente: dois itens danificados no transporte."
-REASON_CANCELLED = "Cliente desistiu antes do dia da entrega."
+# Same product keys as PRODUCTS_PT, so ORDERS works with either catalog.
+PRODUCTS_EN = (
+    SeedProduct("brigadeiro", "Brigadeiro box (12 pcs)", "38.00", "Classic chocolate fudge balls."),
+    SeedProduct("beijinho", "Coconut kisses box (12 pcs)", "38.00", "Freshly grated coconut."),
+    SeedProduct("bolo", "Cake in a jar (300 g)", "22.50", "Flavor of the day."),
+    SeedProduct("pudim", "Caramel flan", "14.90", "150 g serving."),
+    SeedProduct("trufa", "Assorted truffle (each)", "6.75"),
+    SeedProduct("cocada", "Creamy coconut candy", "9.00", "200 g pack."),
+    SeedProduct("pacoca", "Handmade peanut candy", "7.50", "Not offered this campaign.", False),
+)
+
+
+@dataclass(frozen=True)
+class SeedTexts:
+    """Every free-text value the seed writes, per `--lang`. People and customers stay as-is."""
+
+    institution: str
+    promotion: str
+    products: tuple[SeedProduct, ...]
+    reason_payment_revoked: str
+    reason_delivery_revoked: str
+    reason_cancelled: str
+
+
+TEXTS = {
+    # Default: the dev seed, in the language of the people who run it.
+    "pt": SeedTexts(
+        institution="Colegio Santa Clara",
+        promotion="Campanha de Pascoa (seed)",
+        products=PRODUCTS_PT,
+        reason_payment_revoked=(
+            "Comprovante de transferencia nao localizado na conciliacao bancaria."
+        ),
+        reason_delivery_revoked=(
+            "Caixa devolvida pelo cliente: dois itens danificados no transporte."
+        ),
+        reason_cancelled="Cliente desistiu antes do dia da entrega.",
+    ),
+    # For the README screenshots (`npm run screenshots`), which are taken in en-US.
+    "en": SeedTexts(
+        institution="Santa Clara School",
+        promotion="Holiday Sweets Fundraiser",
+        products=PRODUCTS_EN,
+        reason_payment_revoked="Bank transfer receipt not found during reconciliation.",
+        reason_delivery_revoked="Box returned by the customer: two items damaged in transit.",
+        reason_cancelled="Customer changed their mind before delivery day.",
+    ),
+}
 
 
 # --- HTTP client ----------------------------------------------------------------------------
@@ -244,14 +288,14 @@ def ensure_account(api: Api, person: SeedUser) -> str:
     return str(body["access_token"])
 
 
-def ensure_institution(api: Api, token: str) -> str:
+def ensure_institution(api: Api, token: str, name: str) -> str:
     page = api.request(
-        "GET", "/institutions", token=token, params={"q": INSTITUTION_NAME, "page": 1, "size": 50}
+        "GET", "/institutions", token=token, params={"q": name, "page": 1, "size": 50}
     )
     for item in page["items"]:
-        if item["name"] == INSTITUTION_NAME:
+        if item["name"] == name:
             return str(item["id"])
-    created = api.request("POST", "/institutions", token=token, json={"name": INSTITUTION_NAME})
+    created = api.request("POST", "/institutions", token=token, json={"name": name})
     return str(created["id"])
 
 
@@ -315,7 +359,9 @@ def ensure_member(api: Api, token: str, promotion_id: str, email: str, roles: li
     )
 
 
-def ensure_products(api: Api, token: str, promotion_id: str) -> dict[str, dict]:
+def ensure_products(
+    api: Api, token: str, promotion_id: str, products: tuple[SeedProduct, ...]
+) -> dict[str, dict]:
     page = api.request(
         "GET",
         f"/promotions/{promotion_id}/products",
@@ -325,7 +371,7 @@ def ensure_products(api: Api, token: str, promotion_id: str) -> dict[str, dict]:
     existing = {item["name"]: item for item in page["items"]}
 
     catalog: dict[str, dict] = {}
-    for spec in PRODUCTS:
+    for spec in products:
         product = existing.get(spec.name)
         if product is None:
             body: dict[str, Any] = {"name": spec.name, "price": spec.price}
@@ -400,6 +446,7 @@ def apply_lifecycle(
     spec: SeedOrder,
     seller_token: str,
     admin_token: str,
+    texts: SeedTexts,
 ) -> dict:
     """Walk the order to its target state, threading `expected_version` from each response."""
     base = f"/promotions/{promotion_id}/orders/{order['id']}"
@@ -430,7 +477,7 @@ def apply_lifecycle(
             {
                 "action": "REVOKE_PAYMENT",
                 "expected_version": order["version"],
-                "reason": REASON_PAYMENT_REVOKED,
+                "reason": texts.reason_payment_revoked,
             },
         )
 
@@ -441,7 +488,7 @@ def apply_lifecycle(
             {
                 "action": "REVOKE_DELIVERY",
                 "expected_version": order["version"],
-                "reason": REASON_DELIVERY_REVOKED,
+                "reason": texts.reason_delivery_revoked,
             },
         )
 
@@ -449,7 +496,7 @@ def apply_lifecycle(
         order = transition(
             "cancel",
             seller_token,
-            {"expected_version": order["version"], "reason": REASON_CANCELLED},
+            {"expected_version": order["version"], "reason": texts.reason_cancelled},
         )
 
     return order
@@ -573,6 +620,12 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
         help="create a fresh promotion instead of topping up the existing seed one",
     )
     parser.add_argument("--database-url", help="only used by --spread-days")
+    parser.add_argument(
+        "--lang",
+        choices=sorted(TEXTS),
+        default="pt",
+        help="language of names, products and reasons; default: %(default)s",
+    )
     return parser.parse_args(argv)
 
 
@@ -593,10 +646,11 @@ def main(argv: list[str] | None = None) -> int:
         admin_token = tokens["admin"]
         print(f"{len(PEOPLE)} accounts ready")
 
-        institution_id = ensure_institution(api, admin_token)
-        name = PROMOTION_NAME
+        texts = TEXTS[args.lang]
+        institution_id = ensure_institution(api, admin_token, texts.institution)
+        name = texts.promotion
         if args.new:
-            name = f"{PROMOTION_NAME} {datetime.now(UTC):%Y-%m-%d %H:%M}"
+            name = f"{texts.promotion} {datetime.now(UTC):%Y-%m-%d %H:%M}"
         promotion, created = ensure_promotion(api, admin_token, institution_id, name)
         promotion = ensure_active(api, admin_token, promotion)
         print(f"Promotion {'created' if created else 'reused'}: {promotion['name']}")
@@ -618,7 +672,7 @@ def main(argv: list[str] | None = None) -> int:
                     raise
                 print(f"No account for {args.grant_to}; register it first to be granted access.")
 
-        catalog = ensure_products(api, admin_token, promotion["id"])
+        catalog = ensure_products(api, admin_token, promotion["id"], texts.products)
         customers = ensure_customers(api, tokens["seller1"], promotion["id"])
         print(f"{len(catalog)} products, {len(customers)} customers ready")
 
@@ -626,7 +680,9 @@ def main(argv: list[str] | None = None) -> int:
         for index, spec in enumerate(ORDERS):
             seller_token = tokens[spec.seller]
             order = create_order(api, seller_token, promotion["id"], spec, catalog, customers)
-            order = apply_lifecycle(api, promotion["id"], order, spec, seller_token, admin_token)
+            order = apply_lifecycle(
+                api, promotion["id"], order, spec, seller_token, admin_token, texts
+            )
             if args.spread_days > 0:
                 days = min(spec.days_ago, max(args.spread_days - 1, 0))
                 # A plausible hour of the day, so same-day orders don't share a timestamp.
