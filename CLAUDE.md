@@ -8,6 +8,7 @@ This project follows a strict Design-First methodology.
   - Product requirements & flows: `docs/prd.md`
   - Data models, invariants & OCC: `docs/erm.md`
   - API routes, contracts & error codes: `docs/api.md`
+- **Human-facing guide:** `README.md` (run/seed/troubleshooting, plus "How this was built" and the architecture trade-offs table). Read it only when a task touches those topics, and update it in the same commit whenever a change alters a command, port, flag, workflow step or a decision listed in that table.
 - Always read the relevant spec files in `/docs` BEFORE generating plans or writing code.
 - Always propose a concise vertical slice plan and wait for human confirmation before writing files.
 
