@@ -56,6 +56,7 @@ docker-compose.yml      # Local dev services (PostgreSQL 16)
 - **Start Local Services:** `docker compose up -d`
 - **Run Backend Tests:** `DATABASE_URL=postgresql+asyncpg://promoledger:promoledger@localhost:5432/promoledger_test uv run pytest -v`
 - **Run Migrations:** `uv run alembic upgrade head`
+- **Seed Demo Data:** `uv run python scripts/seed.py --grant-to you@example.com` (needs the API on `:8000`). The seed **drives the REST API, never raw SQL**, so seeded orders carry genuine `unit_price` snapshots, `version` counters and `ORDER_AUDIT_EVENT` rows; keep it that way when adding data. Re-runnable (accounts, promotion and catalog are find-or-created; `--new` starts a fresh promotion). `--spread-days N` is the one direct database write: it backdates `CUSTOMER_ORDER.created_at` only, so the velocity chart has a curve — `ORDER_AUDIT_EVENT` is append-only (`trg_order_audit_event_append_only`) and is never touched.
 - **Format & Lint:** `uv run ruff check .` and `uv run ruff format .`
 
 ### Frontend Tooling (Slice 4)
