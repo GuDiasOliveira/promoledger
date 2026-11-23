@@ -38,7 +38,8 @@
       "seller": "Vendedor",
       "promotion_admin": "Administrador",
       "promotion_viewer": "Observador"
-    }
+    },
+    "new": "Nova promoção"
   },
   "promotion": {
     "salesWindow": "Período de vendas",
@@ -110,7 +111,16 @@
       "CUSTOMER_NOT_FOUND": "O cliente deste pedido não foi cadastrado.",
       "CUSTOMER_ID_CONFLICT": "Este cliente conflita com um cadastro existente.",
       "IDEMPOTENCY_KEY_REUSED": "Esta alteração conflita com outra já enviada.",
-      "INSUFFICIENT_ROLE": "Você não tem permissão para fazer isso."
+      "INSUFFICIENT_ROLE": "Você não tem permissão para fazer isso.",
+      "USER_NOT_FOUND": "Não existe conta com este e-mail. Peça para a pessoa se cadastrar primeiro.",
+      "ALREADY_MEMBER": "Esta pessoa já é membro da promoção.",
+      "LAST_ADMIN": "Uma promoção precisa manter pelo menos um administrador.",
+      "CURRENCY_LOCKED": "A moeda não pode mudar depois que a promoção tem pedidos.",
+      "INVALID_DATE_RANGE": "As datas devem seguir: início das vendas ≤ último dia de vendas ≤ dia da entrega.",
+      "INVALID_STATUS_TRANSITION": "Esta mudança de status não é permitida.",
+      "INSTITUTION_NOT_FOUND": "Instituição não encontrada.",
+      "PRODUCT_NOT_FOUND": "Produto não encontrado.",
+      "MEMBER_NOT_FOUND": "Membro não encontrado."
     }
   },
   "orders": {
@@ -179,7 +189,10 @@
     "nav": {
       "dashboard": "Painel",
       "orders": "Pedidos",
-      "audit": "Auditoria"
+      "audit": "Auditoria",
+      "products": "Produtos",
+      "members": "Membros",
+      "settings": "Configurações"
     },
     "onlineOnly": "Esta área precisa de conexão com a internet.",
     "kpi": {
@@ -232,5 +245,74 @@
     "audit": {
       "anyEvent": "Todos os eventos"
     }
+  },
+  "form": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "saved": "Alterações salvas."
+  },
+  "newPromotion": {
+    "title": "Nova promoção",
+    "name": "Nome da promoção",
+    "institution": "Instituição (organizadora)",
+    "searchInstitution": "Buscar instituição",
+    "createInstitution": "Criar “{name}”",
+    "change": "Trocar",
+    "salesStart": "Início das vendas",
+    "lastSales": "Último dia de vendas",
+    "delivery": "Dia da entrega",
+    "currency": "Moeda",
+    "currencyHint": "Todos os preços e totais usam esta moeda. Ela não pode mudar depois do primeiro pedido.",
+    "create": "Criar promoção",
+    "invalidDates": "As datas devem seguir: início das vendas ≤ último dia de vendas ≤ dia da entrega."
+  },
+  "settings": {
+    "title": "Configurações",
+    "status": "Status",
+    "statusHint": {
+      "DRAFT": "Ainda não aberta: vendedores não podem registrar pedidos.",
+      "ACTIVE": "Aberta: vendedores podem registrar pedidos.",
+      "CLOSED": "Vendas encerradas: sem novos pedidos, mas pagamentos e entregas ainda podem ser registrados."
+    },
+    "to": {
+      "ACTIVE": "Abrir vendas",
+      "CLOSED": "Encerrar vendas",
+      "REOPEN": "Reabrir vendas"
+    },
+    "confirmClose": "Encerrar as vendas? Novos pedidos não serão mais aceitos. Pagamentos e entregas ainda podem ser registrados."
+  },
+  "products": {
+    "title": "Produtos",
+    "add": "Adicionar produto",
+    "name": "Nome",
+    "description": "Descrição (opcional)",
+    "price": "Preço",
+    "priceHint": "Use vírgula ou ponto para os centavos, ex.: 19,90.",
+    "preview": "Aparece como {value}",
+    "priceErrors": {
+      "format": "Digite um preço como 19,90 (sem separador de milhar).",
+      "decimals": "Use no máximo 2 casas decimais.",
+      "range": "Este preço é alto demais.",
+      "positive": "O preço deve ser maior que zero."
+    },
+    "archived": "Arquivado",
+    "archive": "Arquivar",
+    "restore": "Reativar",
+    "edit": "Editar",
+    "empty": "Nenhum produto ainda."
+  },
+  "members": {
+    "title": "Membros",
+    "add": "Adicionar membro",
+    "email": "E-mail de uma conta existente",
+    "roles": "Papéis",
+    "includeRevoked": "Mostrar membros revogados",
+    "revoked": "Revogado",
+    "revoke": "Revogar",
+    "reinstate": "Reativar",
+    "editRoles": "Editar papéis",
+    "you": "você",
+    "added": "Membro adicionado.",
+    "pickRole": "Escolha pelo menos um papel."
   }
 }

@@ -1312,6 +1312,7 @@ export interface operations {
     list_institutions_api_v1_institutions_get: {
         parameters: {
             query?: {
+                q?: string | null;
                 page?: number;
                 size?: number;
             };

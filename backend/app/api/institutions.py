@@ -1,6 +1,7 @@
 import uuid
+from typing import Annotated
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Query, Response, status
 
 from app.api.deps import CurrentUser, DbSession, Pagination
 from app.core.config import get_settings
@@ -18,9 +19,14 @@ router = APIRouter(prefix="/institutions", tags=["institutions"])
 
 @router.get("", response_model=Page[InstitutionResponse])
 async def list_institutions(
-    _: CurrentUser, session: DbSession, params: Pagination
+    _: CurrentUser,
+    session: DbSession,
+    params: Pagination,
+    q: Annotated[str | None, Query(max_length=255)] = None,
 ) -> Page[InstitutionResponse]:
-    items, total = await institution_service.list_institutions(session, params)
+    items, total = await institution_service.list_institutions(
+        session, params, q=q.strip() if q else None
+    )
     return Page(
         items=[InstitutionResponse.model_validate(i) for i in items],
         total=total,

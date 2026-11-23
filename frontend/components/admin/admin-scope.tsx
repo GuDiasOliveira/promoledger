@@ -17,6 +17,9 @@ const NAV = [
   { href: "/promotion/admin", key: "dashboard", adminOnly: false },
   { href: "/promotion/admin/orders", key: "orders", adminOnly: false },
   { href: "/promotion/admin/audit", key: "audit", adminOnly: true }, // API: admin only
+  { href: "/promotion/admin/products", key: "products", adminOnly: true },
+  { href: "/promotion/admin/members", key: "members", adminOnly: true },
+  { href: "/promotion/admin/settings", key: "settings", adminOnly: true },
 ] as const;
 
 function AdminNav({ scope }: { scope: AdminScope }) {

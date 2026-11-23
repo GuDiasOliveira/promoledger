@@ -71,7 +71,6 @@ function Orders({ promotion }: AdminScope) {
   const filters = parseOrderFilters(useSearchParams());
   const orders = useAdminOrders(promotion.id, filters);
   const names = useMemberNames(promotion.id);
-  const [customerName, setCustomerName] = useState<string | null>(null);
 
   const go = (next: Partial<OrderFilters>) => {
     const merged = { ...filters, page: 1, ...next };
@@ -121,11 +120,8 @@ function Orders({ promotion }: AdminScope) {
           </label>
           <CustomerFilter
             promotionId={promotion.id}
-            selectedName={filters.customerId ? (customerName ?? "…") : null}
-            onPick={(c) => {
-              setCustomerName(c?.name ?? null);
-              go({ customerId: c?.id ?? null });
-            }}
+            selectedName={filters.customerId ? (filters.customerName ?? "…") : null}
+            onPick={(c) => go({ customerId: c?.id ?? null, customerName: c?.name ?? null })}
           />
         </div>
       </Card>

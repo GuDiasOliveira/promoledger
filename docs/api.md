@@ -129,7 +129,7 @@ Response (`200 OK`):
 
 | Method | Endpoint                    | Min Role      | Description                                                    |
 | :----- | :-------------------------- | :------------ | :------------------------------------------------------------- |
-| `GET`  | `/api/v1/institutions`      | Authenticated | List all participating institutions.                           |
+| `GET`  | `/api/v1/institutions`      | Authenticated | List all participating institutions. Optional `?q=` case-insensitive name search (LIKE wildcards escaped; results ordered by name). |
 | `POST` | `/api/v1/institutions`      | Authenticated | Register a new organizational tenant (school, NGO, committee). |
 | `GET`  | `/api/v1/institutions/{id}` | Authenticated | Get institution details and associated campaigns.              |
 

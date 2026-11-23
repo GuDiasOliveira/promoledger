@@ -15,6 +15,8 @@ export interface OrderFilters {
   classification: ClassificationFilter | null;
   sellerMemberId: string | null;
   customerId: string | null;
+  /** Display-only label for the customer filter (there is no "customer by id" endpoint). */
+  customerName: string | null;
   page: number;
 }
 
@@ -30,6 +32,7 @@ export function parseOrderFilters(params: URLSearchParams): OrderFilters {
       : null,
     sellerMemberId: uuidOrNull(params.get("seller")),
     customerId: uuidOrNull(params.get("customer")),
+    customerName: uuidOrNull(params.get("customer")) ? (params.get("customerName")?.slice(0, 255) ?? null) : null,
     page: Number.isSafeInteger(page) && page >= 1 ? page : 1,
   };
 }
@@ -39,7 +42,10 @@ export function orderFiltersQuery(promotionId: string, filters: OrderFilters): s
   const params = new URLSearchParams({ id: promotionId });
   if (filters.classification) params.set("status", filters.classification);
   if (filters.sellerMemberId) params.set("seller", filters.sellerMemberId);
-  if (filters.customerId) params.set("customer", filters.customerId);
+  if (filters.customerId) {
+    params.set("customer", filters.customerId);
+    if (filters.customerName) params.set("customerName", filters.customerName);
+  }
   if (filters.page > 1) params.set("page", String(filters.page));
   return params.toString();
 }

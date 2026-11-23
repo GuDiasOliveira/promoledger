@@ -38,7 +38,12 @@ function PromotionList() {
   if (promotions === undefined) return <p>{t("common.loading")}</p>;
   return (
     <Card>
-      <h1 className="mb-4 text-xl font-semibold">{t("promotions.title")}</h1>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold">{t("promotions.title")}</h1>
+        <Link href="/promotions/new" className="rounded-lg px-3 py-2 font-medium text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950">
+          + {t("promotions.new")}
+        </Link>
+      </div>
       {promotions.length === 0 ? (
         <p className="text-zinc-600 dark:text-zinc-400">{t("promotions.empty")}</p>
       ) : (

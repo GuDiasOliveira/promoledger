@@ -90,3 +90,21 @@ async def test_institution_with_promotions_cannot_be_deleted(
 
     with pytest.raises(IntegrityError, match="fk_promotion_institution_institution_id"):
         await db_session.flush()
+
+
+async def test_search_institutions_by_name(
+    client: AsyncClient, db_session: AsyncSession, auth_headers: dict[str, str]
+) -> None:
+    db_session.add_all(
+        [Institution(name=n) for n in ["Colégio São Paulo", "Igreja Central", "Escola 100%"]]
+    )
+    await db_session.flush()
+
+    async def search(q: str) -> list[str]:
+        response = await client.get(URL, params={"q": q, "size": 100}, headers=auth_headers)
+        assert response.status_code == 200
+        return [i["name"] for i in response.json()["items"]]
+
+    assert await search("igreja") == ["Igreja Central"]  # case-insensitive
+    assert await search("%") == ["Escola 100%"]  # LIKE wildcards are escaped
+    assert "Colégio São Paulo" in await search("são")

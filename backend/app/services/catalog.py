@@ -10,6 +10,7 @@ from app.models import Customer, Product
 from app.schemas.catalog import CustomerCreate, ProductCreate, ProductUpdate
 from app.schemas.pagination import PageParams
 from app.services.pagination import paginate
+from app.services.search import contains_pattern
 
 # --- products -------------------------------------------------------------------------------
 
@@ -53,16 +54,12 @@ async def update_product(session: AsyncSession, product: Product, data: ProductU
 # --- customers ------------------------------------------------------------------------------
 
 
-def _escape_like(term: str) -> str:
-    return term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-
-
 async def list_customers(
     session: AsyncSession, promotion_id: uuid.UUID, params: PageParams, *, q: str | None
 ) -> tuple[list[Customer], int]:
     stmt = select(Customer).where(Customer.promotion_id == promotion_id)
     if q:
-        pattern = f"%{_escape_like(q)}%"
+        pattern = contains_pattern(q)
         stmt = stmt.where(
             or_(
                 Customer.name.ilike(pattern, escape="\\"),

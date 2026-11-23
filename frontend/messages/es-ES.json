@@ -38,7 +38,8 @@
       "seller": "Vendedor",
       "promotion_admin": "Administrador",
       "promotion_viewer": "Observador"
-    }
+    },
+    "new": "Nueva promoción"
   },
   "promotion": {
     "salesWindow": "Periodo de ventas",
@@ -110,7 +111,16 @@
       "CUSTOMER_NOT_FOUND": "El cliente de este pedido no se registró.",
       "CUSTOMER_ID_CONFLICT": "Este cliente entra en conflicto con un registro existente.",
       "IDEMPOTENCY_KEY_REUSED": "Este cambio entra en conflicto con otro ya enviado.",
-      "INSUFFICIENT_ROLE": "No tienes permiso para hacer esto."
+      "INSUFFICIENT_ROLE": "No tienes permiso para hacer esto.",
+      "USER_NOT_FOUND": "No existe ninguna cuenta con este correo. Pide a la persona que se registre primero.",
+      "ALREADY_MEMBER": "Esta persona ya es miembro de la promoción.",
+      "LAST_ADMIN": "Una promoción debe mantener al menos un administrador.",
+      "CURRENCY_LOCKED": "La moneda no puede cambiar después de que la promoción tenga pedidos.",
+      "INVALID_DATE_RANGE": "Las fechas deben cumplir: inicio de ventas ≤ último día de ventas ≤ día de entrega.",
+      "INVALID_STATUS_TRANSITION": "Este cambio de estado no está permitido.",
+      "INSTITUTION_NOT_FOUND": "Institución no encontrada.",
+      "PRODUCT_NOT_FOUND": "Producto no encontrado.",
+      "MEMBER_NOT_FOUND": "Miembro no encontrado."
     }
   },
   "orders": {
@@ -179,7 +189,10 @@
     "nav": {
       "dashboard": "Panel",
       "orders": "Pedidos",
-      "audit": "Auditoría"
+      "audit": "Auditoría",
+      "products": "Productos",
+      "members": "Miembros",
+      "settings": "Ajustes"
     },
     "onlineOnly": "Esta sección necesita conexión a internet.",
     "kpi": {
@@ -232,5 +245,74 @@
     "audit": {
       "anyEvent": "Todos los eventos"
     }
+  },
+  "form": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "saved": "Cambios guardados."
+  },
+  "newPromotion": {
+    "title": "Nueva promoción",
+    "name": "Nombre de la promoción",
+    "institution": "Institución (organizadora)",
+    "searchInstitution": "Buscar institución",
+    "createInstitution": "Crear “{name}”",
+    "change": "Cambiar",
+    "salesStart": "Inicio de ventas",
+    "lastSales": "Último día de ventas",
+    "delivery": "Día de entrega",
+    "currency": "Moneda",
+    "currencyHint": "Todos los precios y totales usan esta moneda. No puede cambiar después del primer pedido.",
+    "create": "Crear promoción",
+    "invalidDates": "Las fechas deben cumplir: inicio de ventas ≤ último día de ventas ≤ día de entrega."
+  },
+  "settings": {
+    "title": "Ajustes",
+    "status": "Estado",
+    "statusHint": {
+      "DRAFT": "Aún no abierta: los vendedores no pueden registrar pedidos.",
+      "ACTIVE": "Abierta: los vendedores pueden registrar pedidos.",
+      "CLOSED": "Ventas cerradas: sin pedidos nuevos, pero aún se pueden registrar pagos y entregas."
+    },
+    "to": {
+      "ACTIVE": "Abrir ventas",
+      "CLOSED": "Cerrar ventas",
+      "REOPEN": "Reabrir ventas"
+    },
+    "confirmClose": "¿Cerrar las ventas? Ya no se aceptarán pedidos nuevos. Aún se podrán registrar pagos y entregas."
+  },
+  "products": {
+    "title": "Productos",
+    "add": "Añadir producto",
+    "name": "Nombre",
+    "description": "Descripción (opcional)",
+    "price": "Precio",
+    "priceHint": "Usa coma o punto para los céntimos, p. ej. 19,90.",
+    "preview": "Se muestra como {value}",
+    "priceErrors": {
+      "format": "Introduce un precio como 19,90 (sin separador de miles).",
+      "decimals": "Usa como máximo 2 decimales.",
+      "range": "Este precio es demasiado alto.",
+      "positive": "El precio debe ser mayor que cero."
+    },
+    "archived": "Archivado",
+    "archive": "Archivar",
+    "restore": "Restaurar",
+    "edit": "Editar",
+    "empty": "Todavía no hay productos."
+  },
+  "members": {
+    "title": "Miembros",
+    "add": "Añadir miembro",
+    "email": "Correo de una cuenta existente",
+    "roles": "Roles",
+    "includeRevoked": "Mostrar miembros revocados",
+    "revoked": "Revocado",
+    "revoke": "Revocar",
+    "reinstate": "Reactivar",
+    "editRoles": "Editar roles",
+    "you": "tú",
+    "added": "Miembro añadido.",
+    "pickRole": "Elige al menos un rol."
   }
 }

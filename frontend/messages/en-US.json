@@ -38,7 +38,8 @@
       "seller": "Seller",
       "promotion_admin": "Admin",
       "promotion_viewer": "Viewer"
-    }
+    },
+    "new": "New promotion"
   },
   "promotion": {
     "salesWindow": "Sales window",
@@ -110,7 +111,16 @@
       "CUSTOMER_NOT_FOUND": "The customer of this order was not registered.",
       "CUSTOMER_ID_CONFLICT": "This customer conflicts with an existing record.",
       "IDEMPOTENCY_KEY_REUSED": "This change conflicts with one already sent.",
-      "INSUFFICIENT_ROLE": "You do not have permission to do this."
+      "INSUFFICIENT_ROLE": "You do not have permission to do this.",
+      "USER_NOT_FOUND": "No account exists with this email. Ask the person to sign up first.",
+      "ALREADY_MEMBER": "This person is already a member of the promotion.",
+      "LAST_ADMIN": "A promotion must keep at least one admin.",
+      "CURRENCY_LOCKED": "The currency cannot change after the promotion has orders.",
+      "INVALID_DATE_RANGE": "Dates must follow: sales start ≤ last sales day ≤ delivery day.",
+      "INVALID_STATUS_TRANSITION": "This status change is not allowed.",
+      "INSTITUTION_NOT_FOUND": "Institution not found.",
+      "PRODUCT_NOT_FOUND": "Product not found.",
+      "MEMBER_NOT_FOUND": "Member not found."
     }
   },
   "orders": {
@@ -179,7 +189,10 @@
     "nav": {
       "dashboard": "Dashboard",
       "orders": "Orders",
-      "audit": "Audit trail"
+      "audit": "Audit trail",
+      "products": "Products",
+      "members": "Members",
+      "settings": "Settings"
     },
     "onlineOnly": "This area needs an internet connection.",
     "kpi": {
@@ -232,5 +245,74 @@
     "audit": {
       "anyEvent": "All events"
     }
+  },
+  "form": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Changes saved."
+  },
+  "newPromotion": {
+    "title": "New promotion",
+    "name": "Promotion name",
+    "institution": "Institution (organizer)",
+    "searchInstitution": "Search institution",
+    "createInstitution": "Create “{name}”",
+    "change": "Change",
+    "salesStart": "Sales start",
+    "lastSales": "Last sales day",
+    "delivery": "Delivery day",
+    "currency": "Currency",
+    "currencyHint": "All prices and totals use this currency. It cannot change after the first order.",
+    "create": "Create promotion",
+    "invalidDates": "Dates must follow: sales start ≤ last sales day ≤ delivery day."
+  },
+  "settings": {
+    "title": "Settings",
+    "status": "Status",
+    "statusHint": {
+      "DRAFT": "Not open yet: sellers cannot register orders.",
+      "ACTIVE": "Open: sellers can register orders.",
+      "CLOSED": "Sales closed: no new orders, but payments and deliveries can still be recorded."
+    },
+    "to": {
+      "ACTIVE": "Open sales",
+      "CLOSED": "Close sales",
+      "REOPEN": "Reopen sales"
+    },
+    "confirmClose": "Close sales? New orders will no longer be accepted. Payments and deliveries can still be recorded."
+  },
+  "products": {
+    "title": "Products",
+    "add": "Add product",
+    "name": "Name",
+    "description": "Description (optional)",
+    "price": "Price",
+    "priceHint": "Use a comma or a dot for cents, e.g. 19,90.",
+    "preview": "Shown as {value}",
+    "priceErrors": {
+      "format": "Enter a price like 19,90 (no thousands separator).",
+      "decimals": "Use at most 2 decimal places.",
+      "range": "This price is too high.",
+      "positive": "The price must be greater than zero."
+    },
+    "archived": "Archived",
+    "archive": "Archive",
+    "restore": "Restore",
+    "edit": "Edit",
+    "empty": "No products yet."
+  },
+  "members": {
+    "title": "Members",
+    "add": "Add member",
+    "email": "Email of an existing account",
+    "roles": "Roles",
+    "includeRevoked": "Show revoked members",
+    "revoked": "Revoked",
+    "revoke": "Revoke",
+    "reinstate": "Reinstate",
+    "editRoles": "Edit roles",
+    "you": "you",
+    "added": "Member added.",
+    "pickRole": "Choose at least one role."
   }
 }

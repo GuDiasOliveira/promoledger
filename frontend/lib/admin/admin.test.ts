@@ -9,9 +9,15 @@ const plain = (s: string) => s.replace(/[  ]/g, " ");
 
 describe("order filters in the URL", () => {
   it("round-trips through the query string", () => {
-    const filters = { classification: "DIVERGENCE" as const, sellerMemberId: SELLER, customerId: null, page: 3 };
+    const filters = {
+      classification: "DIVERGENCE" as const,
+      sellerMemberId: SELLER,
+      customerId: SELLER,
+      customerName: "Ana Souza",
+      page: 3,
+    };
     const query = orderFiltersQuery(PROMO, filters);
-    expect(query).toBe(`id=${PROMO}&status=DIVERGENCE&seller=${SELLER}&page=3`);
+    expect(query).toBe(`id=${PROMO}&status=DIVERGENCE&seller=${SELLER}&customer=${SELLER}&customerName=Ana+Souza&page=3`);
     expect(parseOrderFilters(new URLSearchParams(query))).toEqual(filters);
   });
 
@@ -19,11 +25,22 @@ describe("order filters in the URL", () => {
     const parsed = parseOrderFilters(
       new URLSearchParams("status=DROP_TABLE&seller=not-a-uuid&customer=1&page=-4"),
     );
-    expect(parsed).toEqual({ classification: null, sellerMemberId: null, customerId: null, page: 1 });
+    expect(parsed).toEqual({
+      classification: null,
+      sellerMemberId: null,
+      customerId: null,
+      customerName: null,
+      page: 1,
+    });
   });
 
   it("maps to the API query (omitting empty filters)", () => {
-    expect(orderFiltersToApi({ classification: null, sellerMemberId: SELLER, customerId: null, page: 2 }, 20)).toEqual({
+    expect(
+      orderFiltersToApi(
+        { classification: null, sellerMemberId: SELLER, customerId: null, customerName: null, page: 2 },
+        20,
+      ),
+    ).toEqual({
       page: 2,
       size: 20,
       seller_member_id: SELLER,

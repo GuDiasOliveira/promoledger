@@ -8,6 +8,7 @@ from app.models import Institution, Promotion, PromotionInstitution, PromotionMe
 from app.schemas.institution import InstitutionCreate
 from app.schemas.pagination import PageParams
 from app.services.pagination import paginate
+from app.services.search import contains_pattern
 
 
 def institution_not_found() -> AppError:
@@ -22,9 +23,14 @@ async def create_institution(session: AsyncSession, data: InstitutionCreate) -> 
 
 
 async def list_institutions(
-    session: AsyncSession, params: PageParams
+    session: AsyncSession, params: PageParams, *, q: str | None = None
 ) -> tuple[list[Institution], int]:
-    stmt = select(Institution).order_by(Institution.created_at.desc(), Institution.id)
+    stmt = select(Institution)
+    if q:
+        stmt = stmt.where(Institution.name.ilike(contains_pattern(q), escape="\\"))
+        stmt = stmt.order_by(Institution.name, Institution.id)
+    else:
+        stmt = stmt.order_by(Institution.created_at.desc(), Institution.id)
     return await paginate(session, stmt, params)
 
 
