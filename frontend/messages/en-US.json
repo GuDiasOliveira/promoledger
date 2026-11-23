@@ -39,7 +39,8 @@
       "promotion_admin": "Admin",
       "promotion_viewer": "Viewer"
     },
-    "new": "New promotion"
+    "new": "New promotion",
+    "tokens": "API tokens"
   },
   "promotion": {
     "salesWindow": "Sales window",
@@ -120,7 +121,10 @@
       "INVALID_STATUS_TRANSITION": "This status change is not allowed.",
       "INSTITUTION_NOT_FOUND": "Institution not found.",
       "PRODUCT_NOT_FOUND": "Product not found.",
-      "MEMBER_NOT_FOUND": "Member not found."
+      "MEMBER_NOT_FOUND": "Member not found.",
+      "TOKEN_READ_ONLY": "API tokens are read-only.",
+      "TOKEN_NOT_ALLOWED": "Sign in to manage tokens.",
+      "TOKEN_NOT_FOUND": "Token not found."
     }
   },
   "orders": {
@@ -314,5 +318,28 @@
     "you": "you",
     "added": "Member added.",
     "pickRole": "Choose at least one role."
+  },
+  "tokens": {
+    "title": "API tokens",
+    "intro": "Read-only tokens for integrations such as AI assistants (MCP). They can read your promotions' data but can never change anything.",
+    "name": "Token name",
+    "expires": "Expires in",
+    "days": "{count, plural, one {# day} other {# days}}",
+    "create": "Create token",
+    "copyNow": "Copy this token now. For your security it will not be shown again.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "empty": "No tokens yet.",
+    "created": "Created {date}",
+    "expiresAt": "Expires {date}",
+    "lastUsed": "Last used {date}",
+    "neverUsed": "Never used",
+    "status": {
+      "active": "Active",
+      "revoked": "Revoked",
+      "expired": "Expired"
+    },
+    "revoke": "Revoke",
+    "confirmRevoke": "Revoke this token? Integrations using it will stop working immediately."
   }
 }

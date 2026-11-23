@@ -151,5 +151,6 @@ This PRD proposes a software application to address these promotion frictions by
 - `If-Match` header support on transition endpoints (MVP accepts `expected_version` in the body only).
 - Replace the audit append-only trigger with database grants (`REVOKE UPDATE, DELETE`) and a separate migration role.
 - Native-speaker review of the `es-ES` (and `pt-BR`) translations before public launch.
+- MCP server over Streamable HTTP (remote agents), with OAuth instead of personal tokens; the MVP ships stdio only.
 - Background Sync API (send the outbox while the app is closed; Chromium-only) on top of the MVP's in-app sync (online/visibility/heartbeat triggers).
 - Customer cache beyond 500 per promotion on the device (incremental/searchable sync).

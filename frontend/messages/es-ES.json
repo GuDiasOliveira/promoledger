@@ -39,7 +39,8 @@
       "promotion_admin": "Administrador",
       "promotion_viewer": "Observador"
     },
-    "new": "Nueva promoción"
+    "new": "Nueva promoción",
+    "tokens": "Tokens de API"
   },
   "promotion": {
     "salesWindow": "Periodo de ventas",
@@ -120,7 +121,10 @@
       "INVALID_STATUS_TRANSITION": "Este cambio de estado no está permitido.",
       "INSTITUTION_NOT_FOUND": "Institución no encontrada.",
       "PRODUCT_NOT_FOUND": "Producto no encontrado.",
-      "MEMBER_NOT_FOUND": "Miembro no encontrado."
+      "MEMBER_NOT_FOUND": "Miembro no encontrado.",
+      "TOKEN_READ_ONLY": "Los tokens de API son de solo lectura.",
+      "TOKEN_NOT_ALLOWED": "Inicia sesión para gestionar tokens.",
+      "TOKEN_NOT_FOUND": "Token no encontrado."
     }
   },
   "orders": {
@@ -314,5 +318,28 @@
     "you": "tú",
     "added": "Miembro añadido.",
     "pickRole": "Elige al menos un rol."
+  },
+  "tokens": {
+    "title": "Tokens de API",
+    "intro": "Tokens de solo lectura para integraciones, como asistentes de IA (MCP). Pueden leer los datos de tus promociones, pero nunca modificar nada.",
+    "name": "Nombre del token",
+    "expires": "Caduca en",
+    "days": "{count, plural, one {# día} other {# días}}",
+    "create": "Crear token",
+    "copyNow": "Copia este token ahora. Por seguridad, no se volverá a mostrar.",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "empty": "Todavía no hay tokens.",
+    "created": "Creado el {date}",
+    "expiresAt": "Caduca el {date}",
+    "lastUsed": "Último uso el {date}",
+    "neverUsed": "Nunca usado",
+    "status": {
+      "active": "Activo",
+      "revoked": "Revocado",
+      "expired": "Caducado"
+    },
+    "revoke": "Revocar",
+    "confirmRevoke": "¿Revocar este token? Las integraciones que lo usan dejarán de funcionar de inmediato."
   }
 }

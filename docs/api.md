@@ -88,6 +88,9 @@ Standard Status Codes:
 | :----- | :---------------------- | :------------ | :--------------------------------------------------------------------------------------- |
 | `POST` | `/api/v1/auth/register` | Public        | Register a new user account (`name`, `email`, `password`). Returns created user profile. |
 | `POST` | `/api/v1/auth/token`    | Public        | Authenticate user via email/credentials; returns JWT access token.                       |
+| `POST` | `/api/v1/auth/tokens`   | Signed in (not a token) | Create a read-only personal access token `{name, expires_in_days (1–365, default 90)}` → `201` with the plain `token` **once**. |
+| `GET`  | `/api/v1/auth/tokens`   | Signed in (not a token) | List the caller's tokens (never the plain token). |
+| `DELETE` | `/api/v1/auth/tokens/{token_id}` | Signed in (not a token) | Revoke (soft, idempotent) → `204`. |
 | `GET`  | `/api/v1/auth/me`       | Authenticated | Retrieve current user profile and list of active `PromotionMember` campaigns (`memberships[]`: `member_id`, `promotion_id`, `promotion_name`, `promotion_status`, `roles`). |
 
 ### Auth Error Codes
@@ -102,6 +105,13 @@ Standard Status Codes:
 | `422`  | `VALIDATION_ERROR`         | Payload schema failure; per-field details in `errors[]` (`loc`, `msg`, `type`).      |
 
 > Emails are normalized to lowercase. Passwords: 8–128 characters, hashed with Argon2id. All 401 responses include `WWW-Authenticate: Bearer`.
+
+### Personal Access Tokens (read-only)
+
+- Sent like a JWT: `Authorization: Bearer pl_...`. The token acts as its user (same contextual RBAC).
+- **Read-only, enforced server-side for every route:** any method other than `GET`/`HEAD`/`OPTIONS` → `403 TOKEN_READ_ONLY`.
+- Token management endpoints require a real sign-in: using a token there → `403 TOKEN_NOT_ALLOWED`.
+- Revoked or unknown token → `401 INVALID_TOKEN`; expired → `401 TOKEN_EXPIRED`; another user's token id → `404 TOKEN_NOT_FOUND`.
 
 ### Sample Payload: Token Authentication (`POST /api/v1/auth/token`)
 

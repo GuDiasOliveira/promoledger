@@ -1,3 +1,5 @@
+import hashlib
+import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
 
@@ -44,3 +46,23 @@ def decode_access_token(token: str) -> uuid.UUID:
         return uuid.UUID(payload["sub"])
     except (ValueError, TypeError) as exc:
         raise jwt.InvalidTokenError("Invalid subject claim") from exc
+
+
+# --- Personal access tokens (read-only integrations) ---------------------------------------
+
+API_TOKEN_PREFIX = "pl_"
+
+
+def generate_api_token() -> tuple[str, str, str]:
+    """Return (token, sha256_hex, display_prefix). The plain token is shown to the user ONCE."""
+    token = API_TOKEN_PREFIX + secrets.token_urlsafe(32)  # 256 bits of entropy
+    return token, hash_api_token(token), token[:10]
+
+
+def hash_api_token(token: str) -> str:
+    # A random 256-bit secret needs no slow KDF (unlike passwords): SHA-256 is sufficient.
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def is_api_token(credential: str) -> bool:
+    return credential.startswith(API_TOKEN_PREFIX)

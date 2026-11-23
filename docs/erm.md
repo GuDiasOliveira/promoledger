@@ -322,6 +322,27 @@ Append-only immutable event log capturing all state changes and reversions.
 
 ---
 
+### 2.11 `API_TOKEN`
+
+Personal access token for read-only integrations (e.g. the MCP server, Slice 5).
+
+| Column         | Type           | Constraints                                       | Description                                                        |
+| -------------- | -------------- | ------------------------------------------------- | ------------------------------------------------------------------ |
+| `id`           | `UUID`         | PK, default `gen_random_uuid()`                   | Token identifier.                                                  |
+| `user_id`      | `UUID`         | NOT NULL, FK -> `USER(id)` ON DELETE CASCADE      | Owner; the token reads exactly what this user can read.            |
+| `name`         | `VARCHAR(100)` | NOT NULL, CHECK (`char_length(trim(name)) > 0`)   | Label chosen by the user (e.g. "Claude Desktop").                  |
+| `token_hash`   | `CHAR(64)`     | NOT NULL, UNIQUE                                  | SHA-256 of the token. **The plain token is never stored.**         |
+| `prefix`       | `VARCHAR(16)`  | NOT NULL                                          | First characters (`pl_xxxxxxx`) to recognise the token in lists.   |
+| `scope`        | `VARCHAR(16)`  | NOT NULL, default `'read'`, CHECK in `('read')`   | Only `read` exists: any non-GET request with the token is refused. |
+| `expires_at`   | `TIMESTAMPTZ`  | NOT NULL                                          | Mandatory expiry (1–365 days).                                     |
+| `last_used_at` | `TIMESTAMPTZ`  | NULL                                              | Updated at most once per minute.                                   |
+| `revoked_at`   | `TIMESTAMPTZ`  | NULL                                              | Soft revocation (kept for the record of past usage).               |
+| `created_at`   | `TIMESTAMPTZ`  | NOT NULL, default `NOW()`                         | Creation timestamp.                                                |
+
+> **Format & hashing:** tokens are `pl_` + 256 random bits (URL-safe base64), shown to the user once. A high-entropy random secret needs no slow KDF, so SHA-256 is used (passwords keep Argon2id).
+
+---
+
 ## 3. Order Operational States & Reconciliation Matrix
 
 Because payments and physical deliveries happen informally and asynchronously in field campaigns, `ORDER` decomposes status into independent dimensions:

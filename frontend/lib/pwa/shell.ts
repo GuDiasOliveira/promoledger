@@ -21,4 +21,5 @@ export const APP_SHELL = [
   "/promotion/admin/members",
   "/promotion/admin/settings",
   "/promotions/new",
+  "/account/tokens",
 ] as const;

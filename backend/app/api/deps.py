@@ -1,17 +1,18 @@
 import uuid
 from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, Header
+from fastapi import Depends, Header, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
 from app.core.errors import AppError
-from app.core.security import decode_access_token
-from app.models import Promotion, PromotionMember, User
+from app.core.security import decode_access_token, hash_api_token, is_api_token
+from app.models import ApiToken, Promotion, PromotionMember, User
 from app.models.enums import Role
 from app.schemas.pagination import PageParams, page_params
 from app.services.access import PromotionContext
@@ -27,12 +28,45 @@ def _unauthorized(code: str, detail: str) -> AppError:
     return AppError(401, code, detail, headers=_WWW_AUTHENTICATE)
 
 
+READ_ONLY_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+API_TOKEN_TOUCH_INTERVAL = timedelta(minutes=1)
+
+
+async def _user_from_api_token(request: Request, session: AsyncSession, token: str) -> User:
+    """Personal access token: valid, unexpired, unrevoked — and READ-ONLY, enforced here
+    for every route, so no integration (e.g. a modified MCP server) can ever write."""
+    row = (
+        await session.execute(select(ApiToken).where(ApiToken.token_hash == hash_api_token(token)))
+    ).scalar_one_or_none()
+    if row is None or row.revoked_at is not None:
+        raise _unauthorized("INVALID_TOKEN", "Access token is invalid.")
+    now = datetime.now(UTC)
+    if row.expires_at <= now:
+        raise _unauthorized("TOKEN_EXPIRED", "Access token has expired.")
+    if request.method not in READ_ONLY_METHODS:
+        raise AppError(403, "TOKEN_READ_ONLY", "API tokens are read-only.")
+    if row.last_used_at is None or now - row.last_used_at > API_TOKEN_TOUCH_INTERVAL:
+        await session.execute(
+            update(ApiToken).where(ApiToken.id == row.id).values(last_used_at=func.now())
+        )
+        await session.commit()
+    user = await session.get(User, row.user_id)
+    if user is None:
+        raise _unauthorized("INVALID_TOKEN", "Access token is invalid.")
+    request.state.auth_kind = "api_token"
+    return user
+
+
 async def get_current_user(
+    request: Request,
     session: DbSession,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer_scheme)],
 ) -> User:
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise _unauthorized("NOT_AUTHENTICATED", "Missing bearer token.")
+    if is_api_token(credentials.credentials):
+        return await _user_from_api_token(request, session, credentials.credentials)
+    request.state.auth_kind = "session"
     try:
         user_id = decode_access_token(credentials.credentials)
     except jwt.ExpiredSignatureError as exc:
@@ -47,6 +81,18 @@ async def get_current_user(
 
 
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+async def get_session_user(request: Request, user: CurrentUser) -> User:
+    """Routes that manage credentials require a real login, never an API token."""
+    if getattr(request.state, "auth_kind", None) != "session":
+        raise AppError(
+            403, "TOKEN_NOT_ALLOWED", "This action requires signing in, not an API token."
+        )
+    return user
+
+
+SessionUser = Annotated[User, Depends(get_session_user)]
 
 
 # --- Contextual RBAC (PROMOTION_MEMBER) -----------------------------------------------------

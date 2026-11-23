@@ -89,6 +89,14 @@ docker-compose.yml      # Local dev services (PostgreSQL 16)
 - **E2E (Playwright, production build):** `npm run test:e2e` — starts its own backend (`:8001`) and frontend (`:3001`) and recreates the `promoledger_e2e` database on every run (never `promoledger_test`).
 - **PWA icons:** edit `public/icons/icon.svg`, then `node scripts/gen-icons.mjs`.
 
+### MCP Server (Slice 5)
+
+- **Location & run:** `backend/app/mcp/` — `PROMOLEDGER_API_URL=http://localhost:8000 PROMOLEDGER_TOKEN=pl_... uv run python -m app.mcp` (stdio). Setup for AI clients: `backend/app/mcp/README.md`.
+- **Architecture:** the MCP server is a **client of the REST API** (no DB access). Never add direct database access to it; new data needs a new GET endpoint (which then gets RBAC for free).
+- **Auth:** only read-only personal access tokens (`pl_...`, `API_TOKEN` table). The API refuses non-GET requests made with them (`TOKEN_READ_ONLY`), so the MCP cannot write even if modified. `main()` refuses login JWTs.
+- **Privacy:** tools must never return customer names or contacts (orders are identified by id / short ref). `tests/test_mcp.py` asserts it; keep that test green when adding tools.
+- **SDK:** `mcp` 2.x — `FastMCP` was renamed `MCPServer` (`mcp.server.mcpserver`); failures the model should read are raised as `ToolError`.
+
 ## 5. MVP Execution Roadmap (Vertical Slices)
 
 Implement features sequentially in small, verified vertical slices:

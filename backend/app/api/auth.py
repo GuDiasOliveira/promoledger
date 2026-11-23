@@ -1,9 +1,13 @@
-from fastapi import APIRouter, status
+import uuid
 
-from app.api.deps import CurrentUser, DbSession
+from fastapi import APIRouter, Response, status
+
+from app.api.deps import CurrentUser, DbSession, SessionUser
 from app.core.errors import AppError
 from app.core.security import create_access_token
+from app.schemas.api_token import ApiTokenCreate, ApiTokenCreated, ApiTokenResponse
 from app.schemas.auth import MeResponse, TokenRequest, TokenResponse, UserCreate, UserResponse
+from app.services import api_tokens as token_service
 from app.services import auth as auth_service
 from app.services import members as member_service
 
@@ -35,3 +39,27 @@ async def me(current_user: CurrentUser, session: DbSession) -> MeResponse:
     return MeResponse(
         **UserResponse.model_validate(current_user).model_dump(), memberships=memberships
     )
+
+
+# --- Personal access tokens (read-only; e.g. for the MCP server) ----------------------------
+
+
+@router.post("/tokens", response_model=ApiTokenCreated, status_code=status.HTTP_201_CREATED)
+async def create_api_token(
+    payload: ApiTokenCreate, user: SessionUser, session: DbSession
+) -> ApiTokenCreated:
+    row, token = await token_service.create_token(session, user, payload)
+    return ApiTokenCreated(**ApiTokenResponse.model_validate(row).model_dump(), token=token)
+
+
+@router.get("/tokens", response_model=list[ApiTokenResponse])
+async def list_api_tokens(user: SessionUser, session: DbSession) -> list[ApiTokenResponse]:
+    return [
+        ApiTokenResponse.model_validate(r) for r in await token_service.list_tokens(session, user)
+    ]
+
+
+@router.delete("/tokens/{token_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def revoke_api_token(token_id: uuid.UUID, user: SessionUser, session: DbSession) -> Response:
+    await token_service.revoke_token(session, user, token_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

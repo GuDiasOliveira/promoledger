@@ -40,9 +40,14 @@ function PromotionList() {
     <Card>
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-xl font-semibold">{t("promotions.title")}</h1>
-        <Link href="/promotions/new" className="rounded-lg px-3 py-2 font-medium text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950">
-          + {t("promotions.new")}
-        </Link>
+        <span className="flex flex-wrap gap-1">
+          <Link href="/account/tokens" className="rounded-lg px-3 py-2 text-sm text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800">
+            {t("promotions.tokens")}
+          </Link>
+          <Link href="/promotions/new" className="rounded-lg px-3 py-2 font-medium text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950">
+            + {t("promotions.new")}
+          </Link>
+        </span>
       </div>
       {promotions.length === 0 ? (
         <p className="text-zinc-600 dark:text-zinc-400">{t("promotions.empty")}</p>
