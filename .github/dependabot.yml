@@ -5,6 +5,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      # Actions usually move together (e.g. a Node runtime bump); one PR, one CI run.
+      github-actions:
+        patterns: ["*"]
 
   - package-ecosystem: npm
     directory: /frontend
@@ -17,6 +21,16 @@ updates:
     ignore:
       # Pinned to the version bundled in the editor's Prettier extension (see CLAUDE.md).
       - dependency-name: prettier
+      # The major follows the Node runtime in /.nvmrc; bump both together, by hand.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # openapi-typescript (API contract) and typescript-eslint don't support TypeScript 7 yet.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # eslint-plugin-react/jsx-a11y/import (via eslint-config-next) don't declare ESLint 10
+      # support; wait until eslint-config-next does.
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: uv
     directory: /backend

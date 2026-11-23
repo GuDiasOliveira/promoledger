@@ -176,7 +176,8 @@ an API contract job that re-runs `npm run gen:api` and fails if `frontend/lib/ap
 and the Playwright E2E suite once those pass (traces are uploaded when it fails). Node comes from
 the root `.nvmrc` and Python from `PYTHON_VERSION` in the workflow. Dependabot
 (`.github/dependabot.yml`) opens weekly update PRs for actions, npm and uv. `prettier` is excluded
-from those because it stays pinned.
+because it stays pinned. Majors of `@types/node` (follows `.nvmrc`), `typescript` and `eslint` are
+ignored until their tooling supports them; the reasons are commented in the file.
 
 **Formatting is defined by the repository**, so Claude Code and an editor produce identical
 bytes. Prettier (`.prettierrc.json`, width 100, version pinned to match the editor extension's
